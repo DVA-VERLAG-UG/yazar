@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Yazardan Direkt</title>
+    <meta name="description" content="Standartların ötesinde yayıncılık. Yazar danışmanlığı, editörlük hizmeti ve Amazon'da yayınlama." />
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <div class="scroll-progress" aria-hidden="true"><span class="scroll-progress-bar"></span></div>
+
+    <header class="site-header">
+      <a class="brand" href="#top">
+        <img src="assets/yazar_logo.png" alt="Yazardan Direkt" />
+      </a>
+
+      <nav class="nav-primary" aria-label="Ana menü">
+        <a href="#hizmetler">HİZMETLERİMİZ</a>
+        <a href="#amazon">AMAZONDA YAYINLA</a>
+        <a href="#iletisim">İLETİŞİM</a>
+      </nav>
+
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-panel" aria-label="Menüyü aç">
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+      </button>
+    </header>
+
+    <div class="nav-panel" id="nav-panel" hidden>
+      <nav class="nav-full" aria-label="Tüm menü">
+        <a href="#top">ANASAYFA</a>
+        <a href="#hizmetler">HİZMETLERİMİZ</a>
+        <a href="#hakkimizda">HAKKIMIZDA</a>
+        <a href="#amazon">AMAZONDA YAYINLA</a>
+        <a href="#kitap-satis">HERYERDEKİTAP – KİTAP SATIŞ</a>
+        <a href="#blog">BLOG</a>
+        <a href="#yazarlarimiz">YAZARLARIMIZ</a>
+        <a href="#iletisim">İLETİŞİM</a>
+      </nav>
+      <div class="nav-panel-contact">
+        <a href="tel:+902163011213">+90-0216-301-1213</a>
+        <a href="mailto:info@yazardandirekt.com">info@yazardandirekt.com</a>
+      </div>
+    </div>
+
+    <main class="site-shell">
+      <section class="cinema-scroll" id="top" aria-label="Yazardan Direkt tanıtım">
+        <div class="stage">
+          <div class="world">
+            <!-- Videobühne. Das Seitenverhältnis der Box entspricht der
+                 Quelle, dadurch wird nichts beschnitten. Der Fensterrahmen
+                 kommt später wieder darüber. -->
+            <div class="film" aria-hidden="true">
+              <video
+                class="film-video film-video-loop"
+                src="assets/loop.mp4"
+                autoplay
+                loop
+                muted
+                playsinline
+                preload="auto"
+              ></video>
+              <video
+                class="film-video film-video-main"
+                src="assets/buch.mp4"
+                muted
+                playsinline
+                preload="auto"
+              ></video>
+            </div>
+
+            <!-- Hochauflösendes Standbild des Schlussmoments. Beginnt exakt
+                 auf den Videoausschnitt gelegt und öffnet sich dann auf das
+                 volle Bild. -->
+            <div class="reveal" aria-hidden="true">
+              <img class="reveal-img" src="assets/step_4_libary.png" alt="" decoding="async" />
+            </div>
+
+            <!-- Logo-Auswahl auf dem Buchdeckel. Nur während des Halts bei
+                 Sekunde 15 sichtbar, Lage per Homographie auf das
+                 ausgemessene Lederfeld gerechnet (siehe script.js). -->
+            <section class="cover-pick" aria-label="Kapak logosu seçimi">
+              <div class="cover-logo"><span class="cover-logo-text"></span></div>
+              <button class="cover-arrow cover-arrow-prev" type="button" aria-label="Önceki logo">‹</button>
+              <button class="cover-arrow cover-arrow-next" type="button" aria-label="Sonraki logo">›</button>
+              <div class="cover-meta">
+                <p class="cover-label" aria-live="polite">Yazardan Direkt</p>
+                <div class="cover-dots" aria-hidden="true"></div>
+              </div>
+            </section>
+
+            <!-- Markenviolett als Lichtstimmung. Liegt ÜBER dem Video und
+                 deckt die ganze Bühne, damit Video- und Seitenschwarz gleich
+                 eingefärbt werden -- sonst würde die Videokante wieder
+                 sichtbar. -->
+            <div class="bloom" aria-hidden="true"></div>
+
+            <div class="copy-scrim" aria-hidden="true"></div>
+            <div class="vignette" aria-hidden="true"></div>
+            <div class="grain" aria-hidden="true"></div>
+
+            <div class="copy-rail">
+              <article class="copy-block copy-block-lead" data-in="-500" data-out="1400">
+                <h1>STANDARTLARIN<br />ÖTESİNDE<br />YAYINCILIK</h1>
+                <p class="copy-lede">
+                  Yazar danışmanlığından editörlüğe, basımdan Amazon'da uluslararası yayına — kitabınızın yolculuğu
+                  boyunca yanınızdayız.
+                </p>
+              </article>
+
+              <article class="copy-block" id="hizmetler" data-in="1700" data-out="2800">
+                <p class="copy-index" aria-hidden="true">01</p>
+                <p class="copy-kicker">Yazar Danışmanlığı</p>
+                <h2>Kaleminizin Yanında, Hikâyenizin İçindeyiz.</h2>
+                <p class="copy-text">
+                  Her yazar için kitabı, bir varlık alanıdır; emeğinin, duygusunun ve hayal gücünün en somut hâlidir.
+                  Bu yüzden, yazar danışmanlığı;…
+                </p>
+                <a class="copy-link" href="#hizmetler">Devamını oku</a>
+              </article>
+
+              <article class="copy-block" data-in="3500" data-out="4600">
+                <p class="copy-index" aria-hidden="true">02</p>
+                <p class="copy-kicker">Editörlük Hizmeti</p>
+                <h2>Her zaman Yazarın Yanında, Okura Giden Yolda</h2>
+                <p class="copy-text">
+                  Her eser, yazarından okuruna uzanan anlamlı bir yolculuktur. Editörlük, eserinize ayna tutan; anlamı
+                  büyüten bir yol arkadaşlığıdır…
+                </p>
+                <a class="copy-link" href="#hizmetler">Devamını oku</a>
+              </article>
+
+              <article class="copy-block" id="amazon" data-in="5300" data-out="6400">
+                <p class="copy-index" aria-hidden="true">03</p>
+                <p class="copy-kicker">Amazon'da Yayınla</p>
+                <h2>Bir Kitapla Başlar, Sınırları Aşan Her Yolculuk.</h2>
+                <p class="copy-text">
+                  Eserinizi uluslararası okurla buluşturmak artık daha erişilebilir. Yazardan Direkt, kitabınızı
+                  İngilizceye çevirip Amazon'un tüm dünyadaki platformlarında…
+                </p>
+                <a class="copy-link" href="#amazon">Devamını oku</a>
+              </article>
+
+              <article class="copy-block copy-block-outro" id="iletisim" data-in="7300" data-out="8600">
+                <p class="copy-index" aria-hidden="true">04</p>
+                <p class="copy-kicker">İletişim</p>
+                <h2>Kitabınızı birlikte yayına hazırlayalım.</h2>
+                <p class="copy-text">
+                  <a href="tel:+902163011213">+90-0216-301-1213</a><br />
+                  <a href="mailto:info@yazardandirekt.com">info@yazardandirekt.com</a>
+                </p>
+              </article>
+            </div>
+
+            <div class="scroll-hint" aria-hidden="true">
+              <span class="scroll-hint-line"></span>
+              <span class="scroll-hint-label">KAYDIRIN</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

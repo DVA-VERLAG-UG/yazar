@@ -1,0 +1,802 @@
+:root {
+  /* Die Box hat exakt das Seitenverhältnis der Quelle (758x720 bzw.
+     640x608, praktisch identisch) -- dadurch wird nichts beschnitten und
+     das Video steht in voller Höhe. Willst du die Kinobalken zurück, erhöhe
+     die erste Zahl: 900/720 schneidet 20% weg, 1440/720 wäre 2.00:1. */
+  --film-ratio: 758 / 720;
+  --film-width: min(52vw, 820px, 82vh);
+  --film-right: 0%;
+  --film-pos: 50% 50%;
+  /* Breite der weichen Kante, mit der das Video nach links ins Schwarz läuft. */
+  --film-fade: 18%;
+
+  --film-main-opacity: 0;
+  --progress: 0;
+  --hint-opacity: 1;
+
+  /* Aubergine aus der Kopfleiste der bestehenden Seite, geschaetzt aus dem
+     Screenshot -- gib mir den exakten Hex, dann ziehe ich ihn nach. */
+  --brand-purple: #3c0d55;
+  --brand-purple-lit: rgba(126, 48, 176, 0.1);
+  --brand-purple-deep: rgba(74, 18, 105, 0.14);
+
+  --paper: #f4efe7;
+  --muted: rgba(244, 239, 231, 0.6);
+  --faint: rgba(244, 239, 231, 0.34);
+  --accent: #e2231a;
+
+  --sans: Inter, Satoshi, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+
+  font-family: var(--sans);
+  color: var(--paper);
+  background: #000;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  scroll-behavior: smooth;
+  background: #000;
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  overflow-x: clip;
+  background: #000;
+}
+
+button {
+  border: 0;
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* ---------- Scroll-Fortschritt ---------- */
+
+.scroll-progress {
+  position: fixed;
+  z-index: 31;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(244, 239, 231, 0.09);
+}
+
+.scroll-progress-bar {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--brand-purple) 0%, #7e30b0 40%, var(--accent) 100%);
+  transform: scaleX(var(--progress));
+  transform-origin: 0 50%;
+}
+
+/* ---------- Kopfzeile ---------- */
+
+.site-header {
+  position: fixed;
+  z-index: 30;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: clamp(20px, 3vw, 56px);
+  padding: clamp(20px, 2.2vw, 32px) clamp(20px, 3vw, 48px);
+  pointer-events: none;
+}
+
+.site-header > * {
+  pointer-events: auto;
+}
+
+.brand {
+  display: block;
+  margin-right: auto;
+  line-height: 0;
+  text-decoration: none;
+}
+
+.brand img {
+  display: block;
+  height: clamp(30px, 3.2vw, 42px);
+  width: auto;
+}
+
+.nav-primary {
+  display: flex;
+  align-items: center;
+  gap: clamp(18px, 2vw, 38px);
+}
+
+.nav-primary a {
+  position: relative;
+  padding-bottom: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  color: rgba(244, 239, 231, 0.8);
+  text-decoration: none;
+  transition: color 200ms ease;
+}
+
+/* Unterstrich wächst aus der Mitte statt einfach aufzupoppen. */
+.nav-primary a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nav-primary a:hover,
+.nav-primary a:focus-visible {
+  color: var(--paper);
+}
+
+.nav-primary a:hover::after,
+.nav-primary a:focus-visible::after {
+  transform: scaleX(1);
+}
+
+.nav-toggle {
+  display: grid;
+  gap: 5px;
+  width: 46px;
+  height: 46px;
+  place-content: center;
+  border: 1px solid rgba(244, 239, 231, 0.16);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  transition: background 200ms ease, border-color 200ms ease;
+}
+
+.nav-toggle:hover {
+  border-color: rgba(158, 78, 205, 0.65);
+  background: rgba(60, 13, 85, 0.55);
+}
+
+.nav-toggle-bar {
+  display: block;
+  width: 20px;
+  height: 1.5px;
+  background: var(--paper);
+}
+
+/* ---------- Menütafel ---------- */
+
+.nav-panel {
+  position: fixed;
+  z-index: 29;
+  inset: 0;
+  display: grid;
+  align-content: center;
+  gap: clamp(28px, 4vh, 52px);
+  padding: clamp(90px, 13vh, 150px) clamp(24px, 6vw, 96px) clamp(40px, 8vh, 90px);
+  background: rgba(14, 3, 22, 0.975);
+}
+
+.nav-panel[hidden] {
+  display: none;
+}
+
+.nav-full {
+  display: grid;
+  gap: clamp(8px, 1.4vh, 18px);
+}
+
+.nav-full a {
+  width: fit-content;
+  font-family: var(--serif);
+  font-size: clamp(24px, 3.6vw, 50px);
+  line-height: 1.1;
+  text-decoration: none;
+  transition: color 200ms ease, transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nav-full a:hover,
+.nav-full a:focus-visible {
+  color: var(--accent);
+  transform: translateX(10px);
+}
+
+.nav-panel-contact {
+  display: grid;
+  gap: 6px;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.nav-panel-contact a {
+  width: fit-content;
+  text-decoration: none;
+  transition: color 200ms ease;
+}
+
+.nav-panel-contact a:hover {
+  color: var(--paper);
+}
+
+/* ---------- Bühne ---------- */
+
+.site-shell {
+  min-height: 100vh;
+}
+
+.cinema-scroll {
+  position: relative;
+  height: calc(100vh + 8200px);
+}
+
+.stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  min-height: 620px;
+  overflow: hidden;
+  isolation: isolate;
+  background: #000;
+}
+
+.world {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+/* ---------- Video ---------- */
+
+.film {
+  position: absolute;
+  z-index: 1;
+  right: var(--film-right);
+  top: 50%;
+  width: var(--film-width);
+  aspect-ratio: var(--film-ratio);
+  transform: translateY(-50%);
+  overflow: hidden;
+  /* Links weich ins Schwarz auslaufen, damit Text- und Videobereich nicht
+     hart aneinanderstoßen. */
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 var(--film-fade), #000 100%);
+  mask-image: linear-gradient(to right, transparent 0%, #000 var(--film-fade), #000 100%);
+}
+
+.film-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--film-pos);
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+/* Der Loop liegt unter buch.mp4. Er muss ausgeblendet werden, sobald buch
+   ihn deckt -- sonst blitzt er beim Übergang aufs Standbild wieder auf,
+   wenn das Video darüber wegblendet. */
+.film-video-loop {
+  opacity: var(--film-loop-opacity, 1);
+}
+
+/* Liegt deckungsgleich über dem Loop, wird eingeblendet und per Scroll
+   durchgescrubbt (siehe script.js). */
+.film-video-main {
+  opacity: var(--film-main-opacity);
+}
+
+/* Das Standbild beginnt exakt deckungsgleich mit dem Videoausschnitt
+   (gemessen: PNG-Region x 287, y 4, 799x759 von 1376x768, Korrelation 0.938)
+   und oeffnet sich dann auf das ganze Bild. Deshalb zwei Rechtecke: .reveal
+   ist das Fenster, .reveal-img das Bild darin. Beide werden in script.js
+   zwischen Anfangs- und Endlage interpoliert. */
+.reveal {
+  position: absolute;
+  z-index: 1;
+  left: var(--rv-x, 0px);
+  top: var(--rv-y, 0px);
+  width: var(--rv-w, 0px);
+  height: var(--rv-h, 0px);
+  overflow: hidden;
+  opacity: var(--rv-opacity, 0);
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 var(--rv-fade, 18%), #000 100%);
+  mask-image: linear-gradient(to right, transparent 0%, #000 var(--rv-fade, 18%), #000 100%);
+}
+
+.reveal-img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  width: var(--rv-iw, 0px);
+  height: auto;
+  transform: translate3d(var(--rv-ix, 0px), var(--rv-iy, 0px), 0);
+  will-change: transform, width;
+}
+
+/* ---------- Logo-Auswahl auf dem Buchdeckel ---------- */
+
+.cover-pick {
+  position: absolute;
+  z-index: 7;
+  inset: 0;
+  opacity: var(--cover-opacity, 0);
+  visibility: var(--cover-visibility, hidden);
+  pointer-events: none;
+}
+
+.cover-pick.is-ready .cover-arrow {
+  pointer-events: auto;
+}
+
+/* Das Logo wird als Maske über einen Goldverlauf gelegt: dadurch wirkt
+   jedes beliebige Logo wie in das Leder geprägt, egal welche Farbe die
+   Quelldatei hat. Die matrix3d kommt aus script.js. */
+.cover-logo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--cover-w, 0px);
+  height: var(--cover-h, 0px);
+  transform: var(--cover-matrix, none);
+  transform-origin: 0 0;
+  background: linear-gradient(115deg, #8a6c33 0%, #c8a55e 26%, #f3e6bd 42%, #fffaea 48%, #c8a55e 62%, #8a6c33 100%);
+  background-size: 240% 100%;
+  animation: cover-sheen 7s ease-in-out infinite;
+  -webkit-mask-image: var(--cover-src);
+  mask-image: var(--cover-src);
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  opacity: var(--cover-logo-opacity, 1);
+  transition: opacity 220ms ease;
+  will-change: transform, opacity;
+}
+
+/* Langsamer Lichtwanderweg ueber die Goldpraegung, wie Kerzenlicht. */
+@keyframes cover-sheen {
+  0%,
+  100% {
+    background-position: 118% 0;
+  }
+  50% {
+    background-position: -18% 0;
+  }
+}
+
+.cover-logo-text {
+  display: none;
+}
+
+/* Platzhaltermodus: statt Maske ein beschriftetes Feld, damit sichtbar ist,
+   wo das eigene Logo hinkaeme. */
+.cover-logo.is-text {
+  background: none;
+  animation: none;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+.cover-logo.is-text .cover-logo-text {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-content: center;
+  border: 2px dashed rgba(206, 173, 105, 0.5);
+  border-radius: 5px;
+  color: #d3b878;
+  font-size: var(--cover-fs, 16px);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: pre-line;
+}
+
+.cover-arrow {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-content: center;
+  margin: -23px 0 0 -23px;
+  border: 1px solid rgba(244, 239, 231, 0.22);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: var(--paper);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 200ms ease, border-color 200ms ease, transform 200ms ease;
+}
+
+.cover-arrow:hover {
+  border-color: rgba(158, 78, 205, 0.7);
+  background: rgba(60, 13, 85, 0.7);
+}
+
+.cover-arrow-prev {
+  transform: translate3d(var(--cover-prev-x, 0px), var(--cover-prev-y, 0px), 0);
+}
+
+.cover-arrow-next {
+  transform: translate3d(var(--cover-next-x, 0px), var(--cover-next-y, 0px), 0);
+}
+
+.cover-arrow-prev:hover {
+  transform: translate3d(calc(var(--cover-prev-x, 0px) - 3px), var(--cover-prev-y, 0px), 0);
+}
+
+.cover-arrow-next:hover {
+  transform: translate3d(calc(var(--cover-next-x, 0px) + 3px), var(--cover-next-y, 0px), 0);
+}
+
+.cover-meta {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: 260px;
+  margin-left: -130px;
+  transform: translate3d(var(--cover-meta-x, 0px), var(--cover-meta-y, 0px), 0);
+  text-align: center;
+}
+
+.cover-label {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cover-dots {
+  display: flex;
+  gap: 7px;
+}
+
+.cover-dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(158, 78, 205, 0.42);
+  transition: background 200ms ease;
+}
+
+.cover-dots span.is-on {
+  background: var(--accent);
+}
+
+/* Markenviolett als Lichtstimmung. Entscheidend ist "screen" auf der
+   ganzen Bühne: Video- und Seitenschwarz sind beide exakt #000 und werden
+   dadurch identisch eingefärbt -- eine Einfärbung des Hintergrunds allein
+   würde die Videokante wieder sichtbar machen. */
+.bloom {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  background:
+    radial-gradient(38% 34% at 78% 44%, var(--brand-purple-lit), transparent 72%),
+    radial-gradient(62% 54% at 4% 92%, var(--brand-purple-deep), transparent 76%);
+}
+
+/* Schattenverlauf über der linken Hälfte: hält den Text lesbar und
+   verbindet die beiden Bereiche. */
+.copy-scrim {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to right,
+    #0a0210 0%,
+    rgba(0, 0, 0, 0.9) 24%,
+    rgba(0, 0, 0, 0.5) 42%,
+    rgba(0, 0, 0, 0) 60%
+  );
+}
+
+/* Randabdunklung -- zieht den Blick zur Mitte, klassischer Kinolook. */
+.vignette {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(125% 100% at 50% 50%, transparent 42%, rgba(9, 2, 16, 0.58) 100%);
+}
+
+/* Feines Filmkorn, nimmt dem Schwarz die digitale Glätte. */
+.grain {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  opacity: 0.05;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------- Textspalte ---------- */
+
+.copy-rail {
+  position: absolute;
+  z-index: 6;
+  left: clamp(20px, 5vw, 96px);
+  top: 50%;
+  width: min(38vw, 520px);
+  height: 66vh;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.copy-block {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(calc(-50% + var(--copy-y, 0px)));
+  will-change: transform, opacity;
+}
+
+.copy-block a {
+  pointer-events: auto;
+}
+
+.copy-index {
+  margin: 0 0 14px;
+  font-family: var(--serif);
+  font-size: 13px;
+  letter-spacing: 0.22em;
+  color: #a06bc4;
+}
+
+.copy-kicker {
+  margin: 0 0 16px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.copy-block h1 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: clamp(2.5rem, 4.1vw, 4.1rem);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+}
+
+.copy-block h2 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: clamp(1.7rem, 2.4vw, 2.5rem);
+  font-weight: 400;
+  line-height: 1.14;
+  letter-spacing: -0.005em;
+}
+
+.copy-lede {
+  margin: 28px 0 0;
+  max-width: 40ch;
+  font-size: clamp(0.98rem, 1vw, 1.08rem);
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.copy-text {
+  margin: 22px 0 0;
+  max-width: 44ch;
+  font-size: clamp(0.98rem, 1.02vw, 1.1rem);
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.copy-text a {
+  color: var(--paper);
+  text-decoration: none;
+  transition: color 200ms ease;
+}
+
+.copy-text a:hover {
+  color: var(--accent);
+}
+
+.copy-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin-top: 28px;
+  padding: 0 26px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1), filter 200ms ease;
+}
+
+.copy-link::after {
+  content: "→";
+  transform: translateX(-4px);
+  opacity: 0;
+  transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease;
+}
+
+.copy-link:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+}
+
+.copy-link:hover::after {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* ---------- Scroll-Hinweis ---------- */
+
+.scroll-hint {
+  position: absolute;
+  z-index: 5;
+  left: clamp(20px, 5vw, 96px);
+  bottom: clamp(28px, 5vh, 54px);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  opacity: var(--hint-opacity);
+  pointer-events: none;
+}
+
+.scroll-hint-line {
+  position: relative;
+  display: block;
+  width: 54px;
+  height: 1px;
+  overflow: hidden;
+  background: rgba(244, 239, 231, 0.22);
+}
+
+.scroll-hint-line::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  transform-origin: 0 50%;
+  animation: hint-sweep 2.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes hint-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  55%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.scroll-hint-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  color: var(--faint);
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 900px) {
+  :root {
+    --film-width: min(100vw, 58vh);
+    --film-right: 50%;
+    --film-fade: 0%;
+  }
+
+  .film {
+    top: 27vh;
+    transform: translate(50%, -50%);
+  }
+
+  .copy-scrim {
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.72) 0%,
+      rgba(0, 0, 0, 0.2) 30%,
+      rgba(0, 0, 0, 0.86) 56%,
+      #000 76%
+    );
+  }
+
+  .copy-rail {
+    left: clamp(20px, 6vw, 48px);
+    right: clamp(20px, 6vw, 48px);
+    top: auto;
+    bottom: 7vh;
+    width: auto;
+    height: 42vh;
+    transform: none;
+  }
+
+  .copy-block {
+    top: auto;
+    bottom: 0;
+    transform: translateY(var(--copy-y, 0px));
+  }
+
+  .nav-primary {
+    display: none;
+  }
+
+  .scroll-hint {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .scroll-hint-line::after,
+  .cover-logo {
+    animation: none;
+  }
+
+  .nav-full a,
+  .copy-link {
+    transition: color 200ms ease;
+  }
+}
+
+/* ---------- später: Fensterrahmen ----------
+   window_frame.png ist vorerst raus. Zum Wiederherstellen brauchst du eine
+   .window-plate mit Seitenverhältnis 1370/768 über dem Video und diese
+   gemessenen Werte:
+
+     Öffnung im PNG:  x 506-851, y 23-555  (von 1370x768)
+                      = links 36.93%, oben 2.99%, 25.26% breit, 69.40% hoch
+     Mitte/Ursprung:  49.55% / 37.70%   <- Skalierungsursprung für den
+                      Flug durchs Fenster; nur auf diesem Punkt bleibt das
+                      Video beim Zoom stehen
+     Ruheabstand:     --win-distance 0.62 (Desktop), 0.78 (<1100px),
+                      0.92 (<640px)
+     Videos im Rahmen bekommen scale(1 / --win-zoom), damit sie den Zoom
+     der Plate nicht mitmachen.
+------------------------------------------------------------------ */
