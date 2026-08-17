@@ -89,12 +89,42 @@
      Die Ecken sind das Lederfeld innerhalb der Goldbordüre, ausgemessen im
      758x720-Frame (318,173 / 597,181 / 623,526 / 344,610). Verjüngung 0.789,
      deshalb eine echte Homographie statt einer Skalierung. */
+  /* ===================================================================
+     LAGE DER FLÄCHEN AUF DEM BUCH -- hier justieren.
+     Alle Werte sind Anteile des Videobildes bei Sekunde 15 (758 x 720 px):
+       x-Anteil = Pixel / 758     y-Anteil = Pixel / 720
+     Reihenfolge immer tl = oben links, tr = oben rechts,
+     br = unten rechts, bl = unten links.
+     Zum Sichtbarmachen die Seite mit #quads aufrufen oder in der Konsole
+     yazarQuads() eingeben -- dann werden beide Flächen umrandet.
+     =================================================================== */
+
+  // Vorderdeckel: das Lederfeld an der Innenkante der Goldbordüre.
+  // Gemessen: 312,152 / 642,106 / 630,527 / 296,637
   const COVER_QUAD = {
-    tl: [0.4195, 0.2403],
-    tr: [0.7876, 0.2514],
-    br: [0.8219, 0.7306],
-    bl: [0.4538, 0.8472],
+    tl: [0.4116, 0.2111],
+    tr: [0.847, 0.1472],
+    br: [0.8311, 0.7319],
+    bl: [0.3905, 0.8847],
   };
+
+  // Buchrücken, die linke Seitenfläche. Rechts bis an die Bordüre des
+  // Deckels, links an die Silhouette.
+  // Gemessen: 160,100 / 267,122 / 293,645 / 172,615
+  const COVER_SPINE_QUAD = {
+    tl: [0.2150, 0.1444],
+    tr: [0.3522, 0.1611],
+    br: [0.3865, 0.9042],
+    bl: [0.2269, 0.8611],
+  };
+
+  /* Feinjustierung. Die Vierecke liegen auf der Kante; die Aufweitung plus
+     die weiche Maske im CSS sorgen dafür, dass kein ungefärbter Rand stehen
+     bleibt. Ein Viereck kann der gerundeten Buchunterkante ohnehin nicht
+     exakt folgen -- die weiche Kante fängt das ab. Über ~1.08 kriecht die
+     Farbe sichtbar auf die Goldbordüre. */
+  const COVER_GROW = 1.05;
+  const COVER_SPINE_GROW = 1.03;
   const COVER_U = [0.15, 0.85]; // Anteil der Deckelbreite, den das Logo einnimmt
   const COVER_V = [0.41, 0.59];
   const COVER_ARROW_X = [0.065, 0.95]; // Frameanteil links/rechts vom Buch
@@ -152,6 +182,7 @@
   let activeFoil = 0;
   let logoSwapTimer = 0;
   let snapTimer = 0;
+  let snapAnchor = -1;
   let loopArmed = false; // Loop spielt seinen letzten Durchlauf
   let loopDone = false; // Loop ist ausgelaufen, Überblendung läuft
   let fadeStart = 0;
@@ -287,6 +318,32 @@
 
   const dist = (p, q) => Math.hypot(q[0] - p[0], q[1] - p[1]);
 
+  // Legt eine Fläche als eigene Abbildung ab: vom Ursprungsrechteck auf das
+  // (aufgeweitete) Viereck. Die weiche Kante sitzt im CSS.
+  function setTintQuad(name, corners, grow) {
+    const cx = (corners[0][0] + corners[1][0] + corners[2][0] + corners[3][0]) / 4;
+    const cy = (corners[0][1] + corners[1][1] + corners[2][1] + corners[3][1]) / 4;
+    const q = corners.map((p) => [cx + (p[0] - cx) * grow, cy + (p[1] - cy) * grow]);
+    const w = Math.max(8, (dist(q[0], q[1]) + dist(q[3], q[2])) / 2);
+    const h = Math.max(8, (dist(q[0], q[3]) + dist(q[1], q[2])) / 2);
+    const m = solveHomography(
+      [
+        [0, 0],
+        [w, 0],
+        [w, h],
+        [0, h],
+      ],
+      q
+    );
+    if (!m) return;
+    root.style.setProperty(`--cover-${name}-w`, `${w}px`);
+    root.style.setProperty(`--cover-${name}-h`, `${h}px`);
+    root.style.setProperty(
+      `--cover-${name}-matrix`,
+      `matrix3d(${m[0]},${m[3]},0,${m[6]},${m[1]},${m[4]},0,${m[7]},0,0,1,0,${m[2]},${m[5]},0,1)`
+    );
+  }
+
   function updateCoverGeometry() {
     if (!coverPick || !film || !stage) return;
     const f = film.getBoundingClientRect();
@@ -337,33 +394,14 @@
       `matrix3d(${hLogo[0]},${hLogo[3]},0,${hLogo[6]},${hLogo[1]},${hLogo[4]},0,${hLogo[7]},0,0,1,0,${hLogo[2]},${hLogo[5]},0,1)`
     );
 
-    /* Zweite Abbildung: das Lederfeld für die Einfärbung. Etwas aufgeweitet,
-       weil das gemessene Viereck die INNERE Kante der Goldbordüre ist -- ohne
-       Aufweitung bliebe ein ungefärbter Lederrand stehen. Die weiche Kante
-       (Maske im CSS) fängt den Überstand wieder ab. */
-    const cx = (quad[0][0] + quad[1][0] + quad[2][0] + quad[3][0]) / 4;
-    const cy = (quad[0][1] + quad[1][1] + quad[2][1] + quad[3][1]) / 4;
-    const grow = 1.06;
-    const tintQuad = quad.map((p) => [cx + (p[0] - cx) * grow, cy + (p[1] - cy) * grow]);
-    const pw = Math.max(8, (dist(tintQuad[0], tintQuad[1]) + dist(tintQuad[3], tintQuad[2])) / 2);
-    const ph = Math.max(8, (dist(tintQuad[0], tintQuad[3]) + dist(tintQuad[1], tintQuad[2])) / 2);
-    const hPanel = solveHomography(
-      [
-        [0, 0],
-        [pw, 0],
-        [pw, ph],
-        [0, ph],
-      ],
-      tintQuad
+    // Einfärbbare Flächen: Vorderdeckel und Rücken, jeweils leicht
+    // aufgeweitet und als eigene Abbildung.
+    setTintQuad("front", quad, COVER_GROW);
+    setTintQuad(
+      "spine",
+      [COVER_SPINE_QUAD.tl, COVER_SPINE_QUAD.tr, COVER_SPINE_QUAD.br, COVER_SPINE_QUAD.bl].map(toStage),
+      COVER_SPINE_GROW
     );
-    if (hPanel) {
-      root.style.setProperty("--cover-panel-w", `${pw}px`);
-      root.style.setProperty("--cover-panel-h", `${ph}px`);
-      root.style.setProperty(
-        "--cover-panel-matrix",
-        `matrix3d(${hPanel[0]},${hPanel[3]},0,${hPanel[6]},${hPanel[1]},${hPanel[4]},0,${hPanel[7]},0,0,1,0,${hPanel[2]},${hPanel[5]},0,1)`
-      );
-    }
 
     const clampX = (x) => Math.min(s.width - 26, Math.max(26, x));
     const prev = toStage([COVER_ARROW_X[0], COVER_ARROW_Y]);
@@ -581,6 +619,12 @@
   function applySnap() {
     if (reduceMotion.matches || !section) return;
     const here = getScrollDistance();
+    // Steht die Seite wirklich still? Läuft noch eine Fahrt (etwa nach einem
+    // Klick auf einen Ankerlink), würde das Einrasten sie unterwegs abfangen.
+    if (Math.abs(here - snapAnchor) > 2) {
+      scheduleSnap();
+      return;
+    }
     for (const hold of HOLDS) {
       if (here < hold.from || here > hold.to) continue;
       const delta = hold.center - here;
@@ -591,6 +635,7 @@
   }
 
   function scheduleSnap() {
+    snapAnchor = getScrollDistance();
     window.clearTimeout(snapTimer);
     snapTimer = window.setTimeout(applySnap, SNAP_DELAY);
   }
@@ -751,6 +796,11 @@
   renderCoverLogo(true);
   renderLeather();
   renderFoil();
+
+  // Kontrollansicht: Seite mit #quads aufrufen oder yazarQuads() in der
+  // Konsole -- umrandet die einfärbbaren Flächen zum Justieren.
+  window.yazarQuads = (on = true) => coverPick?.classList.toggle("show-quads", on);
+  if (location.hash === "#quads") window.yazarQuads(true);
 
   buildProgressMarks();
   prepareCopyReveal();

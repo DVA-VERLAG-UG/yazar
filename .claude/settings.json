@@ -62,7 +62,13 @@
       "Bash(node probe14.mjs)",
       "Bash(node probe24.mjs)",
       "Bash(ffmpeg -y -v error -i z-final.png -vf \"crop=460:560:960:190\" zf.png)",
-      "Bash(ffmpeg -y -v error -i z-final.png -vf \"crop=460:560:960:190\" zf2.png)"
+      "Bash(ffmpeg -y -v error -i z-final.png -vf \"crop=460:560:960:190\" zf2.png)",
+      "Bash(node drawquad.mjs '{\"tl\":[157,102],\"tr\":[285,124],\"br\":[296,648],\"bl\":[172,612]}' spine_try1.png)",
+      "Bash(node probe25.mjs)",
+      "Bash(node probe21.mjs)",
+      "Bash(node drawquad.mjs '{\"tl\":[160,100],\"tr\":[267,122],\"br\":[293,645],\"bl\":[172,615]}' spine_try2.png)",
+      "Bash(ffmpeg -y -v error -i s-lacivert.png -vf \"crop=600:700:820:120,scale=600:700\" fin.png)",
+      "Bash(sed -n '/Vorderdeckel: das Lederfeld/,/COVER_SPINE_GROW/p' script.js)"
     ]
   }
 }

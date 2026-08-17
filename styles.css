@@ -406,9 +406,6 @@ a {
   position: absolute;
   left: 0;
   top: 0;
-  width: var(--cover-panel-w, 0px);
-  height: var(--cover-panel-h, 0px);
-  transform: var(--cover-panel-matrix, none);
   transform-origin: 0 0;
   /* Kein Farbauftrag, sondern eine Filterkette auf das Videobild selbst:
      brightness hebt das fast schwarze Leder multiplikativ an (die Kontraste
@@ -421,15 +418,41 @@ a {
   /* Weiche Kante an allen vier Seiten, damit der Überstand nicht als Kante
      auf der Bordüre aufsitzt. Zwei Verläufe, geschnitten -- ein radialer
      würde in der Mitte einen Fleck erzeugen statt gleichmäßig zu färben. */
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 6%, #000 94%, transparent 100%),
-    linear-gradient(to bottom, transparent 0, #000 5%, #000 95%, transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0, #000 6%, #000 94%, transparent 100%),
-    linear-gradient(to bottom, transparent 0, #000 5%, #000 95%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 10%, #000 90%, transparent 100%),
+    linear-gradient(to bottom, transparent 0, #000 8%, #000 92%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 10%, #000 90%, transparent 100%),
+    linear-gradient(to bottom, transparent 0, #000 8%, #000 92%, transparent 100%);
   -webkit-mask-composite: source-in;
   mask-composite: intersect;
   opacity: calc(var(--cover-opacity, 0) * var(--cover-leather-strength, 0));
   transition: opacity 260ms ease;
   pointer-events: none;
+}
+
+/* Vorderdeckel und Rücken -- zwei Flächen, dieselbe Filterkette. Die Ecken
+   stehen als COVER_QUAD und COVER_SPINE_QUAD in script.js. */
+.cover-tint-front {
+  width: var(--cover-front-w, 0px);
+  height: var(--cover-front-h, 0px);
+  transform: var(--cover-front-matrix, none);
+}
+
+.cover-tint-spine {
+  width: var(--cover-spine-w, 0px);
+  height: var(--cover-spine-h, 0px);
+  transform: var(--cover-spine-matrix, none);
+}
+
+/* Kontrollansicht zum Justieren der Ecken: #quads in der Adresszeile oder
+   yazarQuads() in der Konsole. */
+.cover-pick.show-quads .cover-tint {
+  border: 2px solid #00ff88;
+  background: rgba(0, 255, 136, 0.16);
+  opacity: 1;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 
 /* Langsamer Lichtwanderweg ueber die Goldpraegung, wie Kerzenlicht. */
