@@ -77,6 +77,22 @@ a {
   background: rgba(244, 239, 231, 0.09);
 }
 
+/* Kapitelmarken an den drei Haltepunkten, aus der Timeline erzeugt. */
+.scroll-mark {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  margin-left: -1px;
+  background: rgba(244, 239, 231, 0.3);
+  transition: background 260ms ease, box-shadow 260ms ease;
+}
+
+.scroll-mark.is-passed {
+  background: var(--paper);
+  box-shadow: 0 0 6px rgba(226, 35, 26, 0.8);
+}
+
 .scroll-progress-bar {
   display: block;
   height: 100%;
@@ -244,7 +260,7 @@ a {
 
 .cinema-scroll {
   position: relative;
-  height: calc(100vh + 8200px);
+  height: calc(100vh + 5900px);
 }
 
 .stage {
@@ -338,11 +354,13 @@ a {
 
 /* ---------- Logo-Auswahl auf dem Buchdeckel ---------- */
 
+/* Wichtig: hier KEINE Deckkraft. Ein Elternelement mit opacity < 1 kapselt
+   die Mischmodi seiner Kinder, die Ledereinfärbung würde dann gegen nichts
+   statt gegen das Video mischen. Deshalb blendet jedes Kind einzeln. */
 .cover-pick {
   position: absolute;
   z-index: 7;
   inset: 0;
-  opacity: var(--cover-opacity, 0);
   visibility: var(--cover-visibility, hidden);
   pointer-events: none;
 }
@@ -362,8 +380,11 @@ a {
   height: var(--cover-h, 0px);
   transform: var(--cover-matrix, none);
   transform-origin: 0 0;
-  background: linear-gradient(115deg, #8a6c33 0%, #c8a55e 26%, #f3e6bd 42%, #fffaea 48%, #c8a55e 62%, #8a6c33 100%);
+  background: var(--cover-foil, linear-gradient(115deg, #8a6c33 0%, #c8a55e 26%, #f3e6bd 42%, #fffaea 48%, #c8a55e 62%, #8a6c33 100%));
   background-size: 240% 100%;
+  /* Für die Blindprägung: heller Grat oben, Schatten unten -- ohne Relief
+     wäre eine farblose Prägung auf dem Schirm schlicht nicht zu sehen. */
+  filter: var(--cover-foil-relief, none);
   animation: cover-sheen 7s ease-in-out infinite;
   -webkit-mask-image: var(--cover-src);
   mask-image: var(--cover-src);
@@ -373,9 +394,42 @@ a {
   mask-repeat: no-repeat;
   -webkit-mask-position: center;
   mask-position: center;
-  opacity: var(--cover-logo-opacity, 1);
+  opacity: calc(var(--cover-opacity, 0) * var(--cover-logo-opacity, 1));
   transition: opacity 220ms ease;
   will-change: transform, opacity;
+}
+
+/* Liegt auf demselben Lederfeld wie das Logo, aber als ganze Fläche.
+   "hard-light" färbt in beide Richtungen: ein heller Ton hebt das Leder an,
+   ein dunkler drückt es ab -- und die Struktur des Videos bleibt sichtbar. */
+.cover-tint {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--cover-panel-w, 0px);
+  height: var(--cover-panel-h, 0px);
+  transform: var(--cover-panel-matrix, none);
+  transform-origin: 0 0;
+  /* Kein Farbauftrag, sondern eine Filterkette auf das Videobild selbst:
+     brightness hebt das fast schwarze Leder multiplikativ an (die Kontraste
+     und damit die Narbung bleiben erhalten), sepia + hue-rotate legen den
+     Farbton fest. Ein deckender Farbauftrag würde die Struktur platt machen,
+     und "mix-blend-mode: color" greift hier nicht, weil backdrop-filter das
+     Element isoliert. */
+  backdrop-filter: var(--cover-leather-lift, none);
+  -webkit-backdrop-filter: var(--cover-leather-lift, none);
+  /* Weiche Kante an allen vier Seiten, damit der Überstand nicht als Kante
+     auf der Bordüre aufsitzt. Zwei Verläufe, geschnitten -- ein radialer
+     würde in der Mitte einen Fleck erzeugen statt gleichmäßig zu färben. */
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 6%, #000 94%, transparent 100%),
+    linear-gradient(to bottom, transparent 0, #000 5%, #000 95%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 6%, #000 94%, transparent 100%),
+    linear-gradient(to bottom, transparent 0, #000 5%, #000 95%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  opacity: calc(var(--cover-opacity, 0) * var(--cover-leather-strength, 0));
+  transition: opacity 260ms ease;
+  pointer-events: none;
 }
 
 /* Langsamer Lichtwanderweg ueber die Goldpraegung, wie Kerzenlicht. */
@@ -423,6 +477,7 @@ a {
   position: absolute;
   left: 0;
   top: 0;
+  opacity: var(--cover-opacity, 0);
   display: grid;
   width: 46px;
   height: 46px;
@@ -459,17 +514,71 @@ a {
   transform: translate3d(calc(var(--cover-next-x, 0px) + 3px), var(--cover-next-y, 0px), 0);
 }
 
-.cover-meta {
+/* Am unteren Bühnenrand verankert statt am Video -- so läuft es auf
+   flachen Fenstern nicht aus dem Bild. */
+.cover-panel {
   position: absolute;
-  left: 0;
-  top: 0;
+  left: var(--cover-panel-x, 50%);
+  bottom: clamp(14px, 3vh, 34px);
   display: grid;
   justify-items: center;
-  gap: 10px;
-  width: 260px;
-  margin-left: -130px;
-  transform: translate3d(var(--cover-meta-x, 0px), var(--cover-meta-y, 0px), 0);
+  gap: 9px;
+  width: min(420px, 46vw);
+  margin-left: min(-210px, -23vw);
+  opacity: var(--cover-opacity, 0);
   text-align: center;
+}
+
+.cover-groups {
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 2.4vw, 34px);
+  margin-top: 3px;
+}
+
+.cover-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cover-group-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.cover-swatches {
+  display: flex;
+  gap: 7px;
+}
+
+.cover-swatch {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid rgba(244, 239, 231, 0.28);
+  border-radius: 999px;
+  background: var(--swatch, #000);
+  cursor: pointer;
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), border-color 200ms ease;
+}
+
+.cover-swatch:hover {
+  transform: scale(1.14);
+  border-color: rgba(244, 239, 231, 0.6);
+}
+
+.cover-swatch.is-on {
+  border-color: var(--paper);
+  transform: scale(1.14);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.6), 0 0 0 3px var(--accent);
+}
+
+.cover-pick.is-ready .cover-swatch {
+  pointer-events: auto;
 }
 
 .cover-label {
@@ -574,6 +683,29 @@ a {
 
 .copy-block a {
   pointer-events: auto;
+}
+
+/* Zeilenweiser Aufbau: jede Einheit trägt ihren Index in --line und startet
+   dadurch gestaffelt. Wörter derselben Zeile teilen sich einen Index und
+   laufen gemeinsam ein. */
+.copy-block .rv {
+  opacity: 0;
+  filter: blur(7px);
+  transform: translateY(15px);
+  transition: opacity 560ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 560ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: calc(var(--line, 0) * 85ms);
+}
+
+.copy-block.is-in .rv {
+  opacity: 1;
+  filter: blur(0);
+  transform: none;
+}
+
+.copy-block .w {
+  display: inline-block;
 }
 
 .copy-index {
@@ -777,6 +909,13 @@ a {
   .scroll-hint-line::after,
   .cover-logo {
     animation: none;
+  }
+
+  .copy-block .rv {
+    opacity: 1;
+    filter: none;
+    transform: none;
+    transition: none;
   }
 
   .nav-full a,

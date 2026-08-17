@@ -19,28 +19,48 @@
 
   /* Scroll-Fahrplan in Pixeln Scrollstrecke (max. 8200, siehe
      .cinema-scroll in styles.css). */
-  const TOTAL = 8200;
-  const LOOP_FADE_START = 80; // buch.mp4 beginnt einzublenden
-  const LOOP_FADE_END = 520; // ... und ist hier voll da
+  const TOTAL = 5900;
+  /* Der Loop ist der Ruhezustand ganz oben. Sobald gescrollt wird, darf er
+     seinen Durchlauf zu Ende spielen -- er ist nahtlos geschnitten (letztes
+     gegen erstes Bild: 0.68 von 255), und sein Schlussbild deckt sich mit
+     buch.mp4 bei 0s (0.79). Erst danach wird übergeblendet.
+     Die Notbremse bei SCROLL_FORCE verhindert, dass der Loop bei schnellem
+     Scrollen zu weit hinter der Videoposition zurückbleibt -- bis dorthin ist
+     buch.mp4 noch in derselben Schwebephase, der Wechsel bleibt unsichtbar. */
+  const SCROLL_ARM = 6; // ab hier gilt "der Nutzer scrollt"
+  // Gemessen an der geglätteten Position, also an dem, was buch.mp4 gerade
+  // zeigt -- nicht an der rohen Scrollposition. 900px entsprechen 3.2s, das
+  // Buch schwebt dort noch wie im Loop.
+  const SCROLL_FORCE = 700;
+  const OUTRO_MS = 600; // Dauer der Überblendung
 
   /* Die Abspielposition hängt am Scroll, hält aber bei 10s, 15s und 20s an,
      damit der Text links auf den drei Buchmomenten steht: liegend, stehend,
      Bibliothek. t1 = -1 heißt "letztes Bild" (das Video läuft bis 20.31s,
      und genau darauf passt step_4_libary.png). */
+  /* Die Halte sind auf die Mitte der jeweiligen Textblende gelegt, damit das
+     Einrasten auf dem lesbaren Moment landet. Zwischen den Halten liegt nur
+     so viel Weg, wie die Kamerabewegung braucht -- vorher lief die Seite auf
+     einem Drittel der Strecke leer. */
   const TIMELINE = [
-    { from: 520, to: 1700, t0: 0, t1: 10 },
-    { from: 1700, to: 2800, t0: 10, t1: 10 }, // Halt
-    { from: 2800, to: 3500, t0: 10, t1: 15 },
-    { from: 3500, to: 4600, t0: 15, t1: 15 }, // Halt
-    { from: 4600, to: 5300, t0: 15, t1: 20 },
-    { from: 5300, to: 6400, t0: 20, t1: 20 }, // Halt
-    { from: 6400, to: 7300, t0: 20, t1: -1 },
+    { from: 400, to: 1375, t0: 0, t1: 10 },
+    { from: 1375, to: 2175, t0: 10, t1: 10, hold: 10 },
+    { from: 2175, to: 2675, t0: 10, t1: 15 },
+    { from: 2675, to: 3475, t0: 15, t1: 15, hold: 15 },
+    // Bis zum letzten Bild durchlaufen, nicht bis 20.0s: zwischen 20.0s und
+    // dem Ende fährt die Kamera noch weiter, und step_4_libary.png zeigt das
+    // Ende. Ein Halt bei 20.0s ließe das Video zu früh stehenbleiben.
+    { from: 3475, to: 3975, t0: 15, t1: -1 },
+    { from: 3975, to: 4775, t0: -1, t1: -1, hold: 20 },
+    { from: 4775, to: 5900, t0: -1, t1: -1 },
   ];
 
-  const REVEAL_FADE_START = 6400; // Standbild ein, Video aus
-  const REVEAL_FADE_END = 7300;
-  const REVEAL_OPEN_START = 7300; // Bild öffnet sich auf volles Format
-  const REVEAL_OPEN_END = 8200;
+  // Kurz gehalten: Video und Standbild gleichen sich zu 96%, eine lange
+  // Blende dazwischen sieht aus wie Stillstand.
+  const REVEAL_FADE_START = 4775; // Standbild ein, Video aus
+  const REVEAL_FADE_END = 5100;
+  const REVEAL_OPEN_START = 5100; // Bild öffnet sich auf volles Format
+  const REVEAL_OPEN_END = 5900;
 
   /* Deckung zwischen Video und Standbild, gemessen per Korrelationssuche:
      der Videoausschnitt entspricht der PNG-Region x 287, y 4, 799x759
@@ -50,8 +70,20 @@
   const CROP_Y = 0.00521;
   const CROP_W = 0.58067;
 
-  const COPY_FADE = 300;
+  const COPY_FADE = 220;
   const COPY_SHIFT = 26;
+
+  // Die Halte aus der Timeline ableiten, damit Marken und Snap automatisch
+  // mitwandern, wenn der Fahrplan sich ändert.
+  const HOLDS = TIMELINE.filter((seg) => seg.hold).map((seg) => ({
+    from: seg.from,
+    to: seg.to,
+    center: (seg.from + seg.to) / 2,
+    time: seg.hold,
+  }));
+  const SNAP_DELAY = 170; // ms Ruhe, bevor gefangen wird
+  const SNAP_MAX = 420; // weiter als das wird nie gezogen
+  const SNAP_MIN = 26; // darunter lohnt es nicht
 
   /* Logo-Auswahl auf dem Buchdeckel, sichtbar während des Halts bei 15s.
      Die Ecken sind das Lederfeld innerhalb der Goldbordüre, ausgemessen im
@@ -67,14 +99,40 @@
   const COVER_V = [0.41, 0.59];
   const COVER_ARROW_X = [0.065, 0.95]; // Frameanteil links/rechts vom Buch
   const COVER_ARROW_Y = 0.544;
-  const COVER_META_Y = 0.965;
-  const COVER_IN = 3500;
-  const COVER_OUT = 4600;
+  const COVER_IN = 2675;
+  const COVER_OUT = 3475;
 
   // Eigene Logos hier eintragen: PNG oder SVG mit Transparenz. Die Datei
   // wird als Maske ueber einen Goldverlauf gelegt, die Farbe der Quelle ist
   // also egal. { text: ... } statt { src: ... } setzt ein beschriftetes
   // Platzhalterfeld.
+  /* Ledertöne. "hard-light" entscheidet anhand der Helligkeit des Tons, ob
+     das Leder angehoben oder abgedunkelt wird -- deshalb steuert jede Zeile
+     ihre Stärke selbst. Siyah = unverändert, also Stärke 0. */
+  const COVER_LEATHERS = [
+    { name: "Siyah", swatch: "#1b1519", lift: "none", strength: 0 },
+    { name: "Kahve", swatch: "#6b4326", lift: "brightness(1.5) sepia(0.85) saturate(1.5) hue-rotate(-14deg)", strength: 1 },
+    { name: "Bordo", swatch: "#6b2029", lift: "brightness(1.35) sepia(0.85) saturate(2.2) hue-rotate(-40deg)", strength: 1 },
+    { name: "Lacivert", swatch: "#243d66", lift: "brightness(1.35) sepia(0.85) saturate(1.9) hue-rotate(180deg)", strength: 1 },
+    { name: "Zeytin", swatch: "#2c4834", lift: "brightness(1.24) sepia(0.85) saturate(1.15) hue-rotate(58deg)", strength: 1 },
+  ];
+
+  const FOIL_STOPS = "0%, {b} 26%, {c} 42%, {d} 48%, {b} 62%, {a} 100%";
+  const COVER_FOILS = [
+    { name: "Altın", swatch: "#c8a55e", a: "#8a6c33", b: "#c8a55e", c: "#f3e6bd", d: "#fffaea" },
+    { name: "Gümüş", swatch: "#b9bfc6", a: "#6f7379", b: "#b9bfc6", c: "#eef1f4", d: "#ffffff" },
+    { name: "Bakır", swatch: "#c07440", a: "#7a3f22", b: "#c07440", c: "#eeb98a", d: "#ffe0c4" },
+    {
+      name: "Kabartma",
+      swatch: "#4a3f45",
+      a: "#2b2328",
+      b: "#463b42",
+      c: "#5d5058",
+      d: "#6a5c64",
+      relief: "drop-shadow(0 1px 0 rgba(255, 244, 224, 0.34)) drop-shadow(0 -1px 1px rgba(0, 0, 0, 0.75))",
+    },
+  ];
+
   const COVER_LOGOS = [
     { src: "assets/yazar_logo.png", name: "Yazardan Direkt" },
     { text: "Logonuz\nburada olabilir", name: "Sizin logonuz" },
@@ -90,7 +148,13 @@
   let revealFrom = null;
   let revealTo = null;
   let activeLogo = 0;
+  let activeLeather = 0;
+  let activeFoil = 0;
   let logoSwapTimer = 0;
+  let snapTimer = 0;
+  let loopArmed = false; // Loop spielt seinen letzten Durchlauf
+  let loopDone = false; // Loop ist ausgelaufen, Überblendung läuft
+  let fadeStart = 0;
 
   /* ---------- helpers ---------- */
 
@@ -106,8 +170,11 @@
   const getScrollDistance = () =>
     clamp(-section.getBoundingClientRect().top, 0, section.offsetHeight - window.innerHeight);
 
+  // Achtung: das letzte Bild beginnt bei (Bilder-1)/fps = 20.2702s, die Datei
+  // ist 20.3120s lang. Ein Abzug von 0.05 landete im vorletzten Bild -- das
+  // Video wirkte dadurch abgeschnitten. 0.01 liegt sicher im letzten Bild.
   const videoEnd = () =>
-    mainVideo && Number.isFinite(mainVideo.duration) ? Math.max(0, mainVideo.duration - 0.05) : 20.26;
+    mainVideo && Number.isFinite(mainVideo.duration) ? Math.max(0, mainVideo.duration - 0.01) : 20.3;
 
   /* ---------- Abspielposition aus dem Scroll ---------- */
 
@@ -270,6 +337,34 @@
       `matrix3d(${hLogo[0]},${hLogo[3]},0,${hLogo[6]},${hLogo[1]},${hLogo[4]},0,${hLogo[7]},0,0,1,0,${hLogo[2]},${hLogo[5]},0,1)`
     );
 
+    /* Zweite Abbildung: das Lederfeld für die Einfärbung. Etwas aufgeweitet,
+       weil das gemessene Viereck die INNERE Kante der Goldbordüre ist -- ohne
+       Aufweitung bliebe ein ungefärbter Lederrand stehen. Die weiche Kante
+       (Maske im CSS) fängt den Überstand wieder ab. */
+    const cx = (quad[0][0] + quad[1][0] + quad[2][0] + quad[3][0]) / 4;
+    const cy = (quad[0][1] + quad[1][1] + quad[2][1] + quad[3][1]) / 4;
+    const grow = 1.06;
+    const tintQuad = quad.map((p) => [cx + (p[0] - cx) * grow, cy + (p[1] - cy) * grow]);
+    const pw = Math.max(8, (dist(tintQuad[0], tintQuad[1]) + dist(tintQuad[3], tintQuad[2])) / 2);
+    const ph = Math.max(8, (dist(tintQuad[0], tintQuad[3]) + dist(tintQuad[1], tintQuad[2])) / 2);
+    const hPanel = solveHomography(
+      [
+        [0, 0],
+        [pw, 0],
+        [pw, ph],
+        [0, ph],
+      ],
+      tintQuad
+    );
+    if (hPanel) {
+      root.style.setProperty("--cover-panel-w", `${pw}px`);
+      root.style.setProperty("--cover-panel-h", `${ph}px`);
+      root.style.setProperty(
+        "--cover-panel-matrix",
+        `matrix3d(${hPanel[0]},${hPanel[3]},0,${hPanel[6]},${hPanel[1]},${hPanel[4]},0,${hPanel[7]},0,0,1,0,${hPanel[2]},${hPanel[5]},0,1)`
+      );
+    }
+
     const clampX = (x) => Math.min(s.width - 26, Math.max(26, x));
     const prev = toStage([COVER_ARROW_X[0], COVER_ARROW_Y]);
     const next = toStage([COVER_ARROW_X[1], COVER_ARROW_Y]);
@@ -278,9 +373,50 @@
     root.style.setProperty("--cover-next-x", `${clampX(next[0])}px`);
     root.style.setProperty("--cover-next-y", `${next[1]}px`);
 
-    const meta = toStage([(COVER_ARROW_X[0] + COVER_ARROW_X[1]) / 2, COVER_META_Y]);
-    root.style.setProperty("--cover-meta-x", `${meta[0]}px`);
-    root.style.setProperty("--cover-meta-y", `${meta[1]}px`);
+    const centre = toStage([(COVER_ARROW_X[0] + COVER_ARROW_X[1]) / 2, 0]);
+    root.style.setProperty("--cover-panel-x", `${centre[0]}px`);
+  }
+
+  function renderLeather() {
+    const entry = COVER_LEATHERS[activeLeather];
+    if (!entry) return;
+    root.style.setProperty("--cover-leather-lift", entry.lift);
+    root.style.setProperty("--cover-leather-strength", String(entry.strength));
+    markSwatches(".cover-swatches-leather", activeLeather);
+  }
+
+  function renderFoil() {
+    const f = COVER_FOILS[activeFoil];
+    if (!f) return;
+    root.style.setProperty(
+      "--cover-foil",
+      `linear-gradient(115deg, ${f.a} 0%, ${f.b} 26%, ${f.c} 42%, ${f.d} 48%, ${f.b} 62%, ${f.a} 100%)`
+    );
+    root.style.setProperty("--cover-foil-relief", f.relief || "none");
+    markSwatches(".cover-swatches-foil", activeFoil);
+  }
+
+  function markSwatches(selector, active) {
+    const host = document.querySelector(selector);
+    if (!host) return;
+    Array.from(host.children).forEach((btn, i) => btn.classList.toggle("is-on", i === active));
+  }
+
+  function buildSwatches(selector, list, onPick) {
+    const host = document.querySelector(selector);
+    if (!host) return;
+    host.replaceChildren(
+      ...list.map((entry, i) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "cover-swatch";
+        btn.style.setProperty("--swatch", entry.swatch || entry.color);
+        btn.setAttribute("aria-label", entry.name);
+        btn.title = entry.name;
+        btn.addEventListener("click", () => onPick(i));
+        return btn;
+      })
+    );
   }
 
   function renderCoverLogo(immediate) {
@@ -329,7 +465,9 @@
     if (loopVideo) {
       if (reduceMotion.matches || mainFade > 0.995) {
         if (!loopVideo.paused) loopVideo.pause();
-      } else if (loopVideo.paused) {
+      } else if (loopVideo.paused && !loopDone) {
+        // Nach dem Ausklang nicht neu anwerfen: das Video steht dann auf
+        // seinem Schlussbild und bleibt dort, bis es überblendet ist.
         play(loopVideo);
       }
     }
@@ -347,6 +485,58 @@
 
   /* ---------- Textspalte ---------- */
 
+  // Überschriften in Wörter zerlegen und nach ihrer Zeilenlage gruppieren:
+  // alle Wörter einer Zeile bekommen denselben Index und laufen dadurch
+  // gemeinsam ein. Muss nach jedem Umbruch neu berechnet werden.
+  function prepareCopyReveal() {
+    for (const block of copyBlocks) {
+      let unit = 0;
+      for (const child of Array.from(block.children)) {
+        const isHeading = child.tagName === "H1" || child.tagName === "H2";
+        if (!isHeading) {
+          child.classList.add("rv");
+          child.style.setProperty("--line", String(unit));
+          unit += 1;
+          continue;
+        }
+        if (!child.dataset.raw) child.dataset.raw = child.innerHTML;
+        const source = document.createElement("div");
+        source.innerHTML = child.dataset.raw;
+        const frag = document.createDocumentFragment();
+        for (const node of Array.from(source.childNodes)) {
+          if (node.nodeType !== Node.TEXT_NODE) {
+            frag.appendChild(node.cloneNode(true));
+            continue;
+          }
+          for (const part of node.textContent.split(/(\s+)/)) {
+            if (!part) continue;
+            if (/^\s+$/.test(part)) {
+              frag.appendChild(document.createTextNode(" "));
+              continue;
+            }
+            const word = document.createElement("span");
+            word.className = "rv w";
+            word.textContent = part;
+            frag.appendChild(word);
+          }
+        }
+        child.replaceChildren(frag);
+
+        let lastTop = null;
+        let line = -1;
+        for (const word of child.querySelectorAll(".w")) {
+          const top = word.offsetTop;
+          if (lastTop === null || Math.abs(top - lastTop) > 4) {
+            line += 1;
+            lastTop = top;
+          }
+          word.style.setProperty("--line", String(unit + line));
+        }
+        unit += line + 1;
+      }
+    }
+  }
+
   function updateCopy(scroll) {
     for (const block of copyBlocks) {
       const from = Number(block.dataset.in);
@@ -355,18 +545,94 @@
 
       const enter = smoothstep(from, from + COPY_FADE, scroll);
       const exit = smoothstep(to - COPY_FADE, to, scroll);
-      const opacity = enter * (1 - exit);
 
-      block.style.opacity = opacity;
-      block.style.setProperty("--copy-y", `${(1 - enter) * COPY_SHIFT - exit * COPY_SHIFT}px`);
-      block.style.visibility = opacity < 0.004 ? "hidden" : "visible";
+      // Der Auftritt läuft über den Zeilenaufbau, der Abgang bleibt eine
+      // Blende -- sonst überlagern sich zwei Bewegungen.
+      block.style.opacity = 1 - exit;
+      block.style.setProperty("--copy-y", `${-exit * COPY_SHIFT}px`);
+      block.style.visibility = enter > 0.02 && exit < 0.999 ? "visible" : "hidden";
+      block.classList.toggle("is-in", enter > 0.14 && exit < 0.999);
     }
+  }
+
+  /* ---------- Kapitelmarken und Einrasten ---------- */
+
+  function buildProgressMarks() {
+    const track = document.querySelector(".scroll-progress");
+    if (!track) return;
+    for (const hold of HOLDS) {
+      const mark = document.createElement("span");
+      mark.className = "scroll-mark";
+      mark.style.left = `${(hold.center / TOTAL) * 100}%`;
+      mark.dataset.time = String(hold.time);
+      track.appendChild(mark);
+    }
+  }
+
+  function updateProgressMarks(progress) {
+    const marks = document.querySelectorAll(".scroll-mark");
+    marks.forEach((mark, i) => {
+      mark.classList.toggle("is-passed", progress >= HOLDS[i].center / TOTAL - 0.004);
+    });
+  }
+
+  // Leichtes Einrasten: erst wenn der Scroll steht, und nur über kurze
+  // Distanz -- es soll nachhelfen, nicht am Rad drehen.
+  function applySnap() {
+    if (reduceMotion.matches || !section) return;
+    const here = getScrollDistance();
+    for (const hold of HOLDS) {
+      if (here < hold.from || here > hold.to) continue;
+      const delta = hold.center - here;
+      if (Math.abs(delta) < SNAP_MIN || Math.abs(delta) > SNAP_MAX) return;
+      window.scrollTo({ top: window.scrollY + delta, behavior: "smooth" });
+      return;
+    }
+  }
+
+  function scheduleSnap() {
+    window.clearTimeout(snapTimer);
+    snapTimer = window.setTimeout(applySnap, SNAP_DELAY);
   }
 
   /* ---------- frame loop ---------- */
 
-  function update() {
+  // Verwaltet den Ausklang des Loops und liefert die Deckkraft von buch.mp4.
+  // Anders als der Rest der Seite hängt diese Blende an der Zeit, nicht am
+  // Scroll -- sie startet erst, wenn der Loop durchgelaufen ist.
+  function updateHandover(now) {
+    if (!loopArmed && targetScroll > SCROLL_ARM) {
+      loopArmed = true;
+      if (loopVideo) loopVideo.loop = false;
+    }
+
+    if (loopArmed && !loopDone) {
+      const v = loopVideo;
+      const played = v && Number.isFinite(v.duration) && v.currentTime >= v.duration - 0.06;
+      if (!v || reduceMotion.matches || v.ended || played || smoothScroll > SCROLL_FORCE) {
+        loopDone = true;
+        fadeStart = now;
+      }
+    }
+
+    // Zurück am Seitenanfang: Ruhezustand wiederherstellen.
+    if (loopDone && targetScroll <= 2) {
+      loopArmed = false;
+      loopDone = false;
+      fadeStart = 0;
+      if (loopVideo) {
+        loopVideo.loop = true;
+        loopVideo.currentTime = 0;
+      }
+      return 0;
+    }
+
+    return loopDone ? clamp((now - fadeStart) / OUTRO_MS) : 0;
+  }
+
+  function update(timestamp) {
     rafPending = false;
+    const now = timestamp || performance.now();
 
     targetScroll = getScrollDistance();
 
@@ -378,7 +644,7 @@
     }
     if (Math.abs(smoothScroll - targetScroll) < 0.08) smoothScroll = targetScroll;
 
-    const mainFade = smoothstep(LOOP_FADE_START, LOOP_FADE_END, smoothScroll);
+    const mainFade = updateHandover(now);
     const revealFade = smoothstep(REVEAL_FADE_START, REVEAL_FADE_END, smoothScroll);
     const revealOpen = smoothstep(REVEAL_OPEN_START, REVEAL_OPEN_END, smoothScroll);
     const time = scrubTime(smoothScroll);
@@ -389,7 +655,9 @@
     root.style.setProperty("--film-loop-opacity", 1 - smoothstep(0.88, 1, mainFade));
     root.style.setProperty("--film-main-opacity", mainFade * (1 - revealFade));
     root.style.setProperty("--rv-opacity", revealFade);
-    root.style.setProperty("--progress", clamp(smoothScroll / TOTAL));
+    const progress = clamp(smoothScroll / TOTAL);
+    root.style.setProperty("--progress", progress);
+    updateProgressMarks(progress);
     root.style.setProperty("--hint-opacity", 1 - smoothstep(0, 220, smoothScroll));
 
     const coverOpacity =
@@ -403,7 +671,10 @@
     updateCopy(smoothScroll);
     syncVideos(mainFade, time);
 
-    if (Math.abs(smoothScroll - targetScroll) > 0.08) requestTick();
+    // Während des Ausklangs und der Blende kommen keine Scrollereignisse --
+    // die Bilder müssen also selbst angefordert werden.
+    const waiting = (loopArmed && !loopDone) || (loopDone && mainFade < 1);
+    if (Math.abs(smoothScroll - targetScroll) > 0.08 || waiting) requestTick();
   }
 
   function requestTick() {
@@ -436,10 +707,18 @@
 
   if (!section) return;
 
-  window.addEventListener("scroll", requestTick, { passive: true });
+  window.addEventListener(
+    "scroll",
+    () => {
+      requestTick();
+      scheduleSnap();
+    },
+    { passive: true }
+  );
   window.addEventListener("resize", () => {
     updateRevealGeometry();
     updateCoverGeometry();
+    prepareCopyReveal();
     requestTick();
   });
 
@@ -461,8 +740,20 @@
   }
   document.querySelector(".cover-arrow-prev")?.addEventListener("click", () => cycleLogo(-1));
   document.querySelector(".cover-arrow-next")?.addEventListener("click", () => cycleLogo(1));
+  buildSwatches(".cover-swatches-leather", COVER_LEATHERS, (i) => {
+    activeLeather = i;
+    renderLeather();
+  });
+  buildSwatches(".cover-swatches-foil", COVER_FOILS, (i) => {
+    activeFoil = i;
+    renderFoil();
+  });
   renderCoverLogo(true);
+  renderLeather();
+  renderFoil();
 
+  buildProgressMarks();
+  prepareCopyReveal();
   updateRevealGeometry();
   updateCoverGeometry();
   requestTick();

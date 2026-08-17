@@ -56,7 +56,13 @@
       "Bash(node probe10.mjs)",
       "Bash(sed -n '/scroll/,/8200/p')",
       "Bash(node probe13.mjs)",
-      "Bash(ffmpeg -y -v error -i p-edge.png -pix_fmt rgb24 -f rawvideo pe.raw)"
+      "Bash(ffmpeg -y -v error -i p-edge.png -pix_fmt rgb24 -f rawvideo pe.raw)",
+      "Bash(ffmpeg -y -v error -i q-img.png -pix_fmt gray -f rawvideo qi.raw)",
+      "Bash(ffmpeg -y -v error -i q-vid.png -pix_fmt gray -f rawvideo qv.raw)",
+      "Bash(node probe14.mjs)",
+      "Bash(node probe24.mjs)",
+      "Bash(ffmpeg -y -v error -i z-final.png -vf \"crop=460:560:960:190\" zf.png)",
+      "Bash(ffmpeg -y -v error -i z-final.png -vf \"crop=460:560:960:190\" zf2.png)"
     ]
   }
 }

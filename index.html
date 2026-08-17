@@ -83,13 +83,28 @@
             <!-- Logo-Auswahl auf dem Buchdeckel. Nur während des Halts bei
                  Sekunde 15 sichtbar, Lage per Homographie auf das
                  ausgemessene Lederfeld gerechnet (siehe script.js). -->
-            <section class="cover-pick" aria-label="Kapak logosu seçimi">
+            <section class="cover-pick" aria-label="Kapak tasarımı">
+              <!-- Färbt das Lederfeld ein. Liegt unter dem Logo und mischt
+                   sich farbig mit dem Video, damit die Lederstruktur
+                   durchscheint. -->
+              <div class="cover-tint" aria-hidden="true"></div>
               <div class="cover-logo"><span class="cover-logo-text"></span></div>
               <button class="cover-arrow cover-arrow-prev" type="button" aria-label="Önceki logo">‹</button>
               <button class="cover-arrow cover-arrow-next" type="button" aria-label="Sonraki logo">›</button>
-              <div class="cover-meta">
+
+              <div class="cover-panel">
                 <p class="cover-label" aria-live="polite">Yazardan Direkt</p>
                 <div class="cover-dots" aria-hidden="true"></div>
+                <div class="cover-groups">
+                  <div class="cover-group">
+                    <span class="cover-group-label">Deri</span>
+                    <div class="cover-swatches cover-swatches-leather" role="group" aria-label="Deri rengi"></div>
+                  </div>
+                  <div class="cover-group">
+                    <span class="cover-group-label">Yaldız</span>
+                    <div class="cover-swatches cover-swatches-foil" role="group" aria-label="Yaldız rengi"></div>
+                  </div>
+                </div>
               </div>
             </section>
 
@@ -104,7 +119,7 @@
             <div class="grain" aria-hidden="true"></div>
 
             <div class="copy-rail">
-              <article class="copy-block copy-block-lead" data-in="-500" data-out="1400">
+              <article class="copy-block copy-block-lead" data-in="-500" data-out="1150">
                 <h1>STANDARTLARIN<br />ÖTESİNDE<br />YAYINCILIK</h1>
                 <p class="copy-lede">
                   Yazar danışmanlığından editörlüğe, basımdan Amazon'da uluslararası yayına — kitabınızın yolculuğu
@@ -112,7 +127,7 @@
                 </p>
               </article>
 
-              <article class="copy-block" id="hizmetler" data-in="1700" data-out="2800">
+              <article class="copy-block" id="hizmetler" data-in="1150" data-out="2400">
                 <p class="copy-index" aria-hidden="true">01</p>
                 <p class="copy-kicker">Yazar Danışmanlığı</p>
                 <h2>Kaleminizin Yanında, Hikâyenizin İçindeyiz.</h2>
@@ -123,7 +138,7 @@
                 <a class="copy-link" href="#hizmetler">Devamını oku</a>
               </article>
 
-              <article class="copy-block" data-in="3500" data-out="4600">
+              <article class="copy-block" data-in="2400" data-out="3750">
                 <p class="copy-index" aria-hidden="true">02</p>
                 <p class="copy-kicker">Editörlük Hizmeti</p>
                 <h2>Her zaman Yazarın Yanında, Okura Giden Yolda</h2>
@@ -134,7 +149,7 @@
                 <a class="copy-link" href="#hizmetler">Devamını oku</a>
               </article>
 
-              <article class="copy-block" id="amazon" data-in="5300" data-out="6400">
+              <article class="copy-block" id="amazon" data-in="3750" data-out="5000">
                 <p class="copy-index" aria-hidden="true">03</p>
                 <p class="copy-kicker">Amazon'da Yayınla</p>
                 <h2>Bir Kitapla Başlar, Sınırları Aşan Her Yolculuk.</h2>
@@ -145,7 +160,7 @@
                 <a class="copy-link" href="#amazon">Devamını oku</a>
               </article>
 
-              <article class="copy-block copy-block-outro" id="iletisim" data-in="7300" data-out="8600">
+              <article class="copy-block copy-block-outro" id="iletisim" data-in="5000" data-out="6300">
                 <p class="copy-index" aria-hidden="true">04</p>
                 <p class="copy-kicker">İletişim</p>
                 <h2>Kitabınızı birlikte yayına hazırlayalım.</h2>
