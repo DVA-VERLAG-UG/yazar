@@ -235,6 +235,45 @@ a {
   transform: translateX(10px);
 }
 
+.nav-branch {
+  display: grid;
+  gap: clamp(6px, 0.9vh, 12px);
+}
+
+/* Untermenü von HİZMETLERİMİZ -- kleiner und eingerückt, damit die
+   Hauptpunkte die Gliederung behalten. */
+.nav-sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px clamp(14px, 1.8vw, 26px);
+  padding-left: clamp(12px, 1.6vw, 26px);
+  border-left: 1px solid rgba(158, 78, 205, 0.4);
+}
+
+.nav-sub a {
+  font-family: var(--sans);
+  font-size: clamp(13px, 1.05vw, 15px);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.nav-sub a:hover,
+.nav-sub a:focus-visible {
+  color: var(--paper);
+  transform: none;
+}
+
+.nav-credo {
+  max-width: 46ch;
+  margin: 0;
+  font-family: var(--serif);
+  font-size: clamp(14px, 1.2vw, 17px);
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
 .nav-panel-contact {
   display: grid;
   gap: 6px;

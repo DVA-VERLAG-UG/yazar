@@ -68,7 +68,8 @@
       "Bash(node probe21.mjs)",
       "Bash(node drawquad.mjs '{\"tl\":[160,100],\"tr\":[267,122],\"br\":[293,645],\"bl\":[172,615]}' spine_try2.png)",
       "Bash(ffmpeg -y -v error -i s-lacivert.png -vf \"crop=600:700:820:120,scale=600:700\" fin.png)",
-      "Bash(sed -n '/Vorderdeckel: das Lederfeld/,/COVER_SPINE_GROW/p' script.js)"
+      "Bash(sed -n '/Vorderdeckel: das Lederfeld/,/COVER_SPINE_GROW/p' script.js)",
+      "WebFetch(domain:yazardandirekt.com)"
     ]
   }
 }
