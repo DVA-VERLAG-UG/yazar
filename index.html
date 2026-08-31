@@ -65,33 +65,36 @@
       <section class="cinema-scroll" id="top" aria-label="Yazardan Direkt tanıtım">
         <div class="stage">
           <div class="world">
-            <!-- Videobühne. Das Seitenverhältnis der Box entspricht der
-                 Quelle, dadurch wird nichts beschnitten. Der Fensterrahmen
-                 kommt später wieder darüber. -->
+            <!-- Videobühne. Die Box nimmt für jeden Abschnitt Format, Maßstab
+                 und Versatz an (CLIP_FIT in script.js), denn die vier Clips
+                 sind auf verschiedene Ausschnitte gerendert. Dadurch steht das
+                 Buch über den Schnitt hinweg unverrückt an derselben Stelle;
+                 was sich ändert, ist nur der weiße Rand ringsum. -->
             <div class="film" aria-hidden="true">
               <video
                 class="film-video film-video-loop"
-                src="assets/loop.mp4"
+                src="assets/video/loop.mp4"
                 autoplay
                 loop
                 muted
                 playsinline
                 preload="auto"
               ></video>
-              <video
-                class="film-video film-video-main"
-                src="assets/buch.mp4"
-                muted
-                playsinline
-                preload="auto"
-              ></video>
+              <!-- Die vier Abschnitte liegen übereinander; sichtbar ist immer
+                   nur der, in dem die Scrollposition gerade steht. Die
+                   Schnittbilder sind deckungsgleich, der Wechsel fällt
+                   deshalb nicht auf. -->
+              <video class="film-video film-video-clip" src="assets/video/step1.mp4" muted playsinline preload="auto"></video>
+              <video class="film-video film-video-clip" src="assets/video/step2.mp4" muted playsinline preload="auto"></video>
+              <video class="film-video film-video-clip" src="assets/video/step3.mp4" muted playsinline preload="auto"></video>
+              <video class="film-video film-video-clip" src="assets/video/step4.mp4" muted playsinline preload="auto"></video>
             </div>
 
-            <!-- Hochauflösendes Standbild des Schlussmoments. Beginnt exakt
-                 auf den Videoausschnitt gelegt und öffnet sich dann auf das
-                 volle Bild. -->
+            <!-- Standbild des Schlussmoments (letztes Bild von step4,
+                 doppelt aufgelöst). Beginnt exakt auf dem Videoausschnitt und
+                 öffnet sich dann auf die ganze Bühne. -->
             <div class="reveal" aria-hidden="true">
-              <img class="reveal-img" src="assets/step_4_libary.png" alt="" decoding="async" />
+              <img class="reveal-img" src="assets/video/step4_end.jpg" alt="" decoding="async" />
             </div>
 
             <!-- Logo-Auswahl auf dem Buchdeckel. Nur während des Halts bei
@@ -104,6 +107,8 @@
               <div class="cover-tint cover-tint-front" aria-hidden="true"></div>
               <div class="cover-tint cover-tint-spine" aria-hidden="true"></div>
               <div class="cover-logo"><span class="cover-logo-text"></span></div>
+              <!-- Dasselbe Logo noch einmal quer auf dem Buchrücken. -->
+              <div class="cover-logo cover-logo-spine"><span class="cover-logo-text"></span></div>
               <button class="cover-arrow cover-arrow-prev" type="button" aria-label="Önceki logo">‹</button>
               <button class="cover-arrow cover-arrow-next" type="button" aria-label="Sonraki logo">›</button>
 

@@ -1,14 +1,75 @@
 :root {
-  /* Die Box hat exakt das Seitenverhältnis der Quelle (758x720 bzw.
-     640x608, praktisch identisch) -- dadurch wird nichts beschnitten und
-     das Video steht in voller Höhe. Willst du die Kinobalken zurück, erhöhe
-     die erste Zahl: 900/720 schneidet 20% weg, 1440/720 wäre 2.00:1. */
-  --film-ratio: 758 / 720;
-  --film-width: min(52vw, 820px, 82vh);
+  /* Format, Maßstab und Versatz der Videobox kommen aus script.js und
+     wechseln mit dem laufenden Abschnitt (step1/2 sind 640x608, step3/4 sind
+     768x512, und sie sind auf verschiedene Ausschnitte gerendert). Die Werte
+     stehen als CLIP_FIT dort; --film-width ist nur noch die Bezugsbreite, auf
+     die sich der Maßstab bezieht. Die Höhenschranke ist so gewählt, dass auch
+     die größte Box (step1/2, 1.11 x Bezugsbreite hoch) mit etwas Luft in die
+     Bühne passt. */
+  --film-ratio: 1.0526;
+  --film-width: min(52vw, 820px, 74vh);
   --film-right: 0%;
+  /* Verankerung: am rechten Rand (Desktop) oder mittig (Mobil). Der Maßstab
+     wirkt um die Boxmitte, die Verankerung bleibt davon unberührt. */
+  --film-anchor-x: 0px;
+  --film-top: 50%;
   --film-pos: 50% 50%;
-  /* Breite der weichen Kante, mit der das Video nach links ins Schwarz läuft. */
+  /* Breite der weichen Kante, mit der das Video nach links in den Grund
+     läuft. Rechts sitzt die Box am Fensterrand, dort braucht es keine.
+     Oben und unten reicht ein Hauch: der Grund der Clips ist nicht ganz
+     gleichmäßig (an den Rändern zwischen 228 und 249 gemessen), eine flache
+     Fläche kann ihn also nicht überall treffen. 3% lösen die Kante auf und
+     bleiben unter dem gemessenen Abstand des Buchs zum Bildrand --
+     angeschnitten wird nichts. Den genauen Wert setzt script.js je Abschnitt
+     und je Position darin (CLIP_FIT.fadeY). */
   --film-fade: 18%;
+  --film-fade-right: 0%;
+  --film-fade-y: 10%;
+
+  /* Die weiche Kante läuft nicht gerade, sondern als S (smootherstep). Eine
+     gerade Rampe hat an ihrem oberen Ende einen Knick, und genau dieser Knick
+     zeichnet die Kante der Videobox auf dem hellen Grund nach. Mit dem
+     S-Verlauf beginnt und endet die Blende unmerklich, die Box löst sich
+     dadurch vollständig auf. Beide Verläufe werden als Maske geschnitten;
+     .reveal setzt dieselben Variablen und benutzt sie noch einmal. */
+  --edge-x: linear-gradient(
+    to right,
+    rgb(0 0 0 / 0) 0,
+    rgb(0 0 0 / 0.027) calc(var(--film-fade) * 0.15),
+    rgb(0 0 0 / 0.163) calc(var(--film-fade) * 0.3),
+    rgb(0 0 0 / 0.407) calc(var(--film-fade) * 0.45),
+    rgb(0 0 0 / 0.683) calc(var(--film-fade) * 0.6),
+    rgb(0 0 0 / 0.896) calc(var(--film-fade) * 0.75),
+    rgb(0 0 0 / 0.991) calc(var(--film-fade) * 0.9),
+    rgb(0 0 0 / 1) var(--film-fade),
+    rgb(0 0 0 / 1) calc(100% - var(--film-fade-right)),
+    rgb(0 0 0 / 0.991) calc(100% - var(--film-fade-right) * 0.9),
+    rgb(0 0 0 / 0.896) calc(100% - var(--film-fade-right) * 0.75),
+    rgb(0 0 0 / 0.683) calc(100% - var(--film-fade-right) * 0.6),
+    rgb(0 0 0 / 0.407) calc(100% - var(--film-fade-right) * 0.45),
+    rgb(0 0 0 / 0.163) calc(100% - var(--film-fade-right) * 0.3),
+    rgb(0 0 0 / 0.027) calc(100% - var(--film-fade-right) * 0.15),
+    rgb(0 0 0 / 0) 100%
+  );
+  --edge-y: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0) 0,
+    rgb(0 0 0 / 0.027) calc(var(--film-fade-y) * 0.15),
+    rgb(0 0 0 / 0.163) calc(var(--film-fade-y) * 0.3),
+    rgb(0 0 0 / 0.407) calc(var(--film-fade-y) * 0.45),
+    rgb(0 0 0 / 0.683) calc(var(--film-fade-y) * 0.6),
+    rgb(0 0 0 / 0.896) calc(var(--film-fade-y) * 0.75),
+    rgb(0 0 0 / 0.991) calc(var(--film-fade-y) * 0.9),
+    rgb(0 0 0 / 1) var(--film-fade-y),
+    rgb(0 0 0 / 1) calc(100% - var(--film-fade-y)),
+    rgb(0 0 0 / 0.991) calc(100% - var(--film-fade-y) * 0.9),
+    rgb(0 0 0 / 0.896) calc(100% - var(--film-fade-y) * 0.75),
+    rgb(0 0 0 / 0.683) calc(100% - var(--film-fade-y) * 0.6),
+    rgb(0 0 0 / 0.407) calc(100% - var(--film-fade-y) * 0.45),
+    rgb(0 0 0 / 0.163) calc(100% - var(--film-fade-y) * 0.3),
+    rgb(0 0 0 / 0.027) calc(100% - var(--film-fade-y) * 0.15),
+    rgb(0 0 0 / 0) 100%
+  );
 
   --film-main-opacity: 0;
   --progress: 0;
@@ -17,20 +78,27 @@
   /* Aubergine aus der Kopfleiste der bestehenden Seite, geschaetzt aus dem
      Screenshot -- gib mir den exakten Hex, dann ziehe ich ihn nach. */
   --brand-purple: #3c0d55;
-  --brand-purple-lit: rgba(126, 48, 176, 0.1);
-  --brand-purple-deep: rgba(74, 18, 105, 0.14);
+  /* Auf hellem Grund wird der Schimmer multipliziert statt addiert, die Töne
+     sind deshalb sehr hell gehalten. */
+  --brand-purple-lit: rgba(214, 196, 226, 0.34);
+  --brand-purple-deep: rgba(206, 190, 220, 0.3);
 
-  --paper: #f4efe7;
-  --muted: rgba(244, 239, 231, 0.6);
-  --faint: rgba(244, 239, 231, 0.34);
+  /* Der Grund der neuen Videos ist ein sehr helles Grau; an den Bildrändern
+     gemessen liegt es zwischen 228 und 249. 241 trifft die Mitte, dadurch
+     ist die Kante der Videobox oben und unten nicht zu sehen. */
+  --page: rgb(var(--page-rgb));
+  --page-rgb: 241 241 241;
+  --ink: #16121a;
+  --muted: rgba(22, 18, 26, 0.62);
+  --faint: rgba(22, 18, 26, 0.4);
   --accent: #e2231a;
 
   --sans: Inter, Satoshi, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
 
   font-family: var(--sans);
-  color: var(--paper);
-  background: #000;
+  color: var(--ink);
+  background: var(--page);
 }
 
 * {
@@ -40,14 +108,14 @@
 html {
   min-height: 100%;
   scroll-behavior: smooth;
-  background: #000;
+  background: var(--page);
 }
 
 body {
   min-height: 100%;
   margin: 0;
   overflow-x: clip;
-  background: #000;
+  background: var(--page);
 }
 
 button {
@@ -74,7 +142,7 @@ a {
   left: 0;
   right: 0;
   height: 2px;
-  background: rgba(244, 239, 231, 0.09);
+  background: rgba(22, 18, 26, 0.1);
 }
 
 /* Kapitelmarken an den drei Haltepunkten, aus der Timeline erzeugt. */
@@ -84,12 +152,12 @@ a {
   width: 2px;
   height: 100%;
   margin-left: -1px;
-  background: rgba(244, 239, 231, 0.3);
+  background: rgba(22, 18, 26, 0.26);
   transition: background 260ms ease, box-shadow 260ms ease;
 }
 
 .scroll-mark.is-passed {
-  background: var(--paper);
+  background: var(--ink);
   box-shadow: 0 0 6px rgba(226, 35, 26, 0.8);
 }
 
@@ -131,6 +199,9 @@ a {
   display: block;
   height: clamp(30px, 3.2vw, 42px);
   width: auto;
+  /* Die Datei ist eine weiße Strichzeichnung für dunklen Grund. Umgedreht
+     steht sie schwarz auf dem hellen Grund. */
+  filter: invert(1);
 }
 
 .nav-primary {
@@ -145,7 +216,7 @@ a {
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.09em;
-  color: rgba(244, 239, 231, 0.8);
+  color: rgba(22, 18, 26, 0.72);
   text-decoration: none;
   transition: color 200ms ease;
 }
@@ -165,7 +236,7 @@ a {
 
 .nav-primary a:hover,
 .nav-primary a:focus-visible {
-  color: var(--paper);
+  color: var(--ink);
 }
 
 .nav-primary a:hover::after,
@@ -179,23 +250,23 @@ a {
   width: 46px;
   height: 46px;
   place-content: center;
-  border: 1px solid rgba(244, 239, 231, 0.16);
+  border: 1px solid rgba(22, 18, 26, 0.18);
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(255, 255, 255, 0.66);
   cursor: pointer;
   transition: background 200ms ease, border-color 200ms ease;
 }
 
 .nav-toggle:hover {
-  border-color: rgba(158, 78, 205, 0.65);
-  background: rgba(60, 13, 85, 0.55);
+  border-color: rgba(126, 48, 176, 0.6);
+  background: rgba(126, 48, 176, 0.1);
 }
 
 .nav-toggle-bar {
   display: block;
   width: 20px;
   height: 1.5px;
-  background: var(--paper);
+  background: var(--ink);
 }
 
 /* ---------- Menütafel ---------- */
@@ -208,7 +279,7 @@ a {
   align-content: center;
   gap: clamp(28px, 4vh, 52px);
   padding: clamp(90px, 13vh, 150px) clamp(24px, 6vw, 96px) clamp(40px, 8vh, 90px);
-  background: rgba(14, 3, 22, 0.975);
+  background: rgba(246, 246, 246, 0.99);
 }
 
 .nav-panel[hidden] {
@@ -247,7 +318,7 @@ a {
   flex-wrap: wrap;
   gap: 6px clamp(14px, 1.8vw, 26px);
   padding-left: clamp(12px, 1.6vw, 26px);
-  border-left: 1px solid rgba(158, 78, 205, 0.4);
+  border-left: 1px solid rgba(126, 48, 176, 0.35);
 }
 
 .nav-sub a {
@@ -260,7 +331,7 @@ a {
 
 .nav-sub a:hover,
 .nav-sub a:focus-visible {
-  color: var(--paper);
+  color: var(--ink);
   transform: none;
 }
 
@@ -288,7 +359,7 @@ a {
 }
 
 .nav-panel-contact a:hover {
-  color: var(--paper);
+  color: var(--ink);
 }
 
 /* ---------- Bühne ---------- */
@@ -309,14 +380,14 @@ a {
   min-height: 620px;
   overflow: hidden;
   isolation: isolate;
-  background: #000;
+  background: var(--page);
 }
 
 .world {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  background: #000;
+  background: var(--page);
 }
 
 /* ---------- Video ---------- */
@@ -325,15 +396,23 @@ a {
   position: absolute;
   z-index: 1;
   right: var(--film-right);
-  top: 50%;
+  top: var(--film-top);
   width: var(--film-width);
   aspect-ratio: var(--film-ratio);
-  transform: translateY(-50%);
+  /* Von rechts nach links gelesen: erst den Abschnitt auf seinen Maßstab
+     bringen (um die Boxmitte, die dabei liegen bleibt), dann um den
+     gemessenen Versatz schieben, dann verankern. */
+  transform: translate(var(--film-anchor-x), -50%)
+    translate(var(--clip-dx, 0px), var(--clip-dy, 0px))
+    scale(var(--clip-scale, 1));
   overflow: hidden;
-  /* Links weich ins Schwarz auslaufen, damit Text- und Videobereich nicht
-     hart aneinanderstoßen. */
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 var(--film-fade), #000 100%);
-  mask-image: linear-gradient(to right, transparent 0%, #000 var(--film-fade), #000 100%);
+  /* Ringsum weich in den Grund auslaufen, damit die Box nicht als Rechteck
+     auf dem Weiß steht. Rechts sitzt sie am Fensterrand, dort braucht es
+     keine Blende. */
+  -webkit-mask-image: var(--edge-x), var(--edge-y);
+  mask-image: var(--edge-x), var(--edge-y);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
 }
 
 .film-video {
@@ -348,24 +427,24 @@ a {
   pointer-events: none;
 }
 
-/* Der Loop liegt unter buch.mp4. Er muss ausgeblendet werden, sobald buch
-   ihn deckt -- sonst blitzt er beim Übergang aufs Standbild wieder auf,
-   wenn das Video darüber wegblendet. */
+/* Der Loop liegt unter dem Clipstapel. Er muss ausgeblendet werden, sobald
+   der Stapel ihn deckt -- sonst blitzt er beim Übergang aufs Standbild
+   wieder auf, wenn das Video darüber wegblendet. */
 .film-video-loop {
   opacity: var(--film-loop-opacity, 1);
 }
 
-/* Liegt deckungsgleich über dem Loop, wird eingeblendet und per Scroll
-   durchgescrubbt (siehe script.js). */
-.film-video-main {
-  opacity: var(--film-main-opacity);
+/* Die vier Abschnitte liegen deckungsgleich übereinander. --clip-on setzt
+   script.js je Element auf 1 oder 0; --film-main-opacity blendet den ganzen
+   Stapel gegen den Loop und später gegen das Standbild. */
+.film-video-clip {
+  opacity: calc(var(--film-main-opacity) * var(--clip-on, 0));
 }
 
-/* Das Standbild beginnt exakt deckungsgleich mit dem Videoausschnitt
-   (gemessen: PNG-Region x 287, y 4, 799x759 von 1376x768, Korrelation 0.938)
-   und oeffnet sich dann auf das ganze Bild. Deshalb zwei Rechtecke: .reveal
-   ist das Fenster, .reveal-img das Bild darin. Beide werden in script.js
-   zwischen Anfangs- und Endlage interpoliert. */
+/* Das Standbild ist das letzte Bild von step4 und liegt zu Beginn exakt auf
+   dem Videoausschnitt; danach oeffnet es sich auf die ganze Buehne. Deshalb
+   zwei Rechtecke: .reveal ist das Fenster, .reveal-img das Bild darin. Beide
+   werden in script.js zwischen Anfangs- und Endlage interpoliert. */
 .reveal {
   position: absolute;
   z-index: 1;
@@ -376,8 +455,17 @@ a {
   overflow: hidden;
   opacity: var(--rv-opacity, 0);
   pointer-events: none;
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 var(--rv-fade, 18%), #000 100%);
-  mask-image: linear-gradient(to right, transparent 0%, #000 var(--rv-fade, 18%), #000 100%);
+  /* Dieselben weichen Kanten wie an der Videobox -- solange das Standbild
+     noch auf ihr liegt, darf man den Wechsel nicht am Rand sehen. Dazu
+     werden hier einfach die Variablen der Blende neu belegt, die --edge-*
+     Verläufe lösen sie an dieser Stelle auf. Beim Öffnen laufen beide auf 0. */
+  --film-fade: var(--rv-fade, 18%);
+  --film-fade-right: 0%;
+  --film-fade-y: var(--rv-fade-y, 10%);
+  -webkit-mask-image: var(--edge-x), var(--edge-y);
+  mask-image: var(--edge-x), var(--edge-y);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
 }
 
 .reveal-img {
@@ -423,7 +511,7 @@ a {
   background-size: 240% 100%;
   /* Für die Blindprägung: heller Grat oben, Schatten unten -- ohne Relief
      wäre eine farblose Prägung auf dem Schirm schlicht nicht zu sehen. */
-  filter: var(--cover-foil-relief, none);
+  filter: var(--cover-foil-relief, opacity(1));
   animation: cover-sheen 7s ease-in-out infinite;
   -webkit-mask-image: var(--cover-src);
   mask-image: var(--cover-src);
@@ -436,6 +524,16 @@ a {
   opacity: calc(var(--cover-opacity, 0) * var(--cover-logo-opacity, 1));
   transition: opacity 220ms ease;
   will-change: transform, opacity;
+}
+
+/* Dieselbe Prägung quer auf dem Buchrücken. Lage und Drehung stecken in der
+   matrix3d aus script.js; hier bleibt nur die Helligkeit: der Rücken liegt im
+   Schatten, eine gleich helle Prägung sähe dort aufgeklebt aus. */
+.cover-logo.cover-logo-spine {
+  width: var(--cover-spine-logo-w, 0px);
+  height: var(--cover-spine-logo-h, 0px);
+  transform: var(--cover-spine-logo-matrix, none);
+  filter: brightness(0.62) var(--cover-foil-relief, opacity(1));
 }
 
 /* Liegt auf demselben Lederfeld wie das Logo, aber als ganze Fläche.
@@ -476,10 +574,14 @@ a {
   transform: var(--cover-front-matrix, none);
 }
 
+/* Der Rücken liegt im Schatten, seine Filterkette trägt deshalb einen
+   eigenen Vorfaktor (COVER_SPINE_LIFT in script.js). */
 .cover-tint-spine {
   width: var(--cover-spine-w, 0px);
   height: var(--cover-spine-h, 0px);
   transform: var(--cover-spine-matrix, none);
+  backdrop-filter: var(--cover-leather-lift-spine, none);
+  -webkit-backdrop-filter: var(--cover-leather-lift-spine, none);
 }
 
 /* Kontrollansicht zum Justieren der Ecken: #quads in der Adresszeile oder
@@ -545,10 +647,10 @@ a {
   height: 46px;
   place-content: center;
   margin: -23px 0 0 -23px;
-  border: 1px solid rgba(244, 239, 231, 0.22);
+  border: 1px solid rgba(22, 18, 26, 0.2);
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.55);
-  color: var(--paper);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--ink);
   font-size: 22px;
   line-height: 1;
   cursor: pointer;
@@ -556,8 +658,8 @@ a {
 }
 
 .cover-arrow:hover {
-  border-color: rgba(158, 78, 205, 0.7);
-  background: rgba(60, 13, 85, 0.7);
+  border-color: rgba(126, 48, 176, 0.6);
+  background: rgba(126, 48, 176, 0.12);
 }
 
 .cover-arrow-prev {
@@ -621,7 +723,7 @@ a {
   width: 20px;
   height: 20px;
   padding: 0;
-  border: 1px solid rgba(244, 239, 231, 0.28);
+  border: 1px solid rgba(22, 18, 26, 0.25);
   border-radius: 999px;
   background: var(--swatch, #000);
   cursor: pointer;
@@ -630,13 +732,13 @@ a {
 
 .cover-swatch:hover {
   transform: scale(1.14);
-  border-color: rgba(244, 239, 231, 0.6);
+  border-color: rgba(22, 18, 26, 0.55);
 }
 
 .cover-swatch.is-on {
-  border-color: var(--paper);
+  border-color: var(--ink);
   transform: scale(1.14);
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.6), 0 0 0 3px var(--accent);
+  box-shadow: 0 0 0 2px var(--page), 0 0 0 3px var(--accent);
 }
 
 .cover-pick.is-ready .cover-swatch {
@@ -661,7 +763,7 @@ a {
   width: 5px;
   height: 5px;
   border-radius: 999px;
-  background: rgba(158, 78, 205, 0.42);
+  background: rgba(126, 48, 176, 0.32);
   transition: background 200ms ease;
 }
 
@@ -669,16 +771,17 @@ a {
   background: var(--accent);
 }
 
-/* Markenviolett als Lichtstimmung. Entscheidend ist "screen" auf der
-   ganzen Bühne: Video- und Seitenschwarz sind beide exakt #000 und werden
-   dadurch identisch eingefärbt -- eine Einfärbung des Hintergrunds allein
-   würde die Videokante wieder sichtbar machen. */
+/* Markenviolett als Lichtstimmung. Auf hellem Grund muss es "multiply"
+   sein: der Grund wird eingefärbt, das schwarze Buch bleibt schwarz. Wichtig
+   ist wie vorher, dass die Schicht über der ganzen Bühne liegt -- Video- und
+   Seitengrund werden dadurch gleich eingefärbt und die Kante der Videobox
+   bleibt unsichtbar. */
 .bloom {
   position: absolute;
   z-index: 2;
   inset: 0;
   pointer-events: none;
-  mix-blend-mode: screen;
+  mix-blend-mode: multiply;
   background:
     radial-gradient(38% 34% at 78% 44%, var(--brand-purple-lit), transparent 72%),
     radial-gradient(62% 54% at 4% 92%, var(--brand-purple-deep), transparent 76%);
@@ -693,28 +796,31 @@ a {
   pointer-events: none;
   background: linear-gradient(
     to right,
-    #0a0210 0%,
-    rgba(0, 0, 0, 0.9) 24%,
-    rgba(0, 0, 0, 0.5) 42%,
-    rgba(0, 0, 0, 0) 60%
+    rgb(var(--page-rgb)) 0%,
+    rgb(var(--page-rgb) / 0.94) 24%,
+    rgb(var(--page-rgb) / 0.58) 42%,
+    rgb(var(--page-rgb) / 0) 60%
   );
 }
 
-/* Randabdunklung -- zieht den Blick zur Mitte, klassischer Kinolook. */
+/* Ränder ins Papierweiß ziehen -- dasselbe Mittel wie vorher, nur andersherum:
+   der Blick geht zur Mitte, und die Kante der Videobox verschwindet vollends. */
 .vignette {
   position: absolute;
   z-index: 4;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(125% 100% at 50% 50%, transparent 42%, rgba(9, 2, 16, 0.58) 100%);
+  background: radial-gradient(125% 100% at 50% 50%, transparent 46%, rgb(var(--page-rgb) / 0.62) 100%);
 }
 
-/* Feines Filmkorn, nimmt dem Schwarz die digitale Glätte. */
+/* Feines Korn, nimmt dem Weiß die digitale Glätte. "multiply", damit es das
+   Papier körnt statt es aufzuhellen. */
 .grain {
   position: absolute;
   z-index: 5;
   inset: 0;
-  opacity: 0.05;
+  opacity: 0.035;
+  mix-blend-mode: multiply;
   pointer-events: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
@@ -775,7 +881,7 @@ a {
   font-family: var(--serif);
   font-size: 13px;
   letter-spacing: 0.22em;
-  color: #a06bc4;
+  color: #7e30b0;
 }
 
 .copy-kicker {
@@ -822,7 +928,7 @@ a {
 }
 
 .copy-text a {
-  color: var(--paper);
+  color: var(--ink);
   text-decoration: none;
   transition: color 200ms ease;
 }
@@ -885,7 +991,7 @@ a {
   width: 54px;
   height: 1px;
   overflow: hidden;
-  background: rgba(244, 239, 231, 0.22);
+  background: rgba(22, 18, 26, 0.2);
 }
 
 .scroll-hint-line::after {
@@ -918,23 +1024,24 @@ a {
 
 @media (max-width: 900px) {
   :root {
-    --film-width: min(100vw, 58vh);
+    /* Fast randlos, damit links und rechts kaum Kante gegen den Grund steht.
+       Nicht ganz: die Box von step1/2 ist 1.17 x so breit und ragt über die
+       Bühne hinaus -- bei mehr als 92vw stößt das offene Buch am Rand an. */
+    --film-width: min(92vw, 78vh);
     --film-right: 50%;
-    --film-fade: 0%;
-  }
-
-  .film {
-    top: 27vh;
-    transform: translate(50%, -50%);
+    --film-anchor-x: 50%;
+    --film-top: 27vh;
+    --film-fade: 4%;
+    --film-fade-right: 4%;
   }
 
   .copy-scrim {
     background: linear-gradient(
       to bottom,
-      rgba(0, 0, 0, 0.72) 0%,
-      rgba(0, 0, 0, 0.2) 30%,
-      rgba(0, 0, 0, 0.86) 56%,
-      #000 76%
+      rgb(var(--page-rgb) / 0.72) 0%,
+      rgb(var(--page-rgb) / 0.2) 30%,
+      rgb(var(--page-rgb) / 0.9) 56%,
+      rgb(var(--page-rgb)) 76%
     );
   }
 
